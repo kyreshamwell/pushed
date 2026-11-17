@@ -76,13 +76,13 @@ final class NotificationPlannerTests: XCTestCase {
             XCTAssertNotNil(midday, "streak \(streak) should get a midday nudge")
             XCTAssertTrue(
                 midday!.title.contains("\(streak)"),
-                "streak \(streak) produced title \"\(midday!.title)\" — number missing or wrong"
+                "streak \(streak) produced title \"\(midday!.title)\": number missing or wrong"
             )
         }
     }
 
     func testStreakCountsThroughYesterdayNotToday() {
-        // 13 green days ending yesterday, nothing today. Must say 13 — not 12
+        // 13 green days ending yesterday, nothing today. Must say 13, not 12
         // (dropping yesterday) and not 14 (counting today optimistically).
         let plan = NotificationPlanner.plan(
             context(now: at("2026-08-04", 9), lastActiveDaysAgo: 1, streakLength: 13)
@@ -145,7 +145,7 @@ final class NotificationPlannerTests: XCTestCase {
             for notification in plan where notification.id.hasPrefix("daily-") {
                 XCTAssertTrue(
                     cal.isDate(notification.fireDate, inSameDayAs: now),
-                    "\(notification.id) was scheduled off-day — tomorrow's streak isn't knowable today"
+                    "\(notification.id) was scheduled off-day: tomorrow's streak isn't knowable today"
                 )
             }
         }
@@ -186,7 +186,7 @@ final class NotificationPlannerTests: XCTestCase {
         let plan = NotificationPlanner.plan(
             context(now: at("2026-08-04", 15), lastActiveDaysAgo: 1, streakLength: 9)
         )
-        XCTAssertNil(find(plan, slot: "midday"), "1pm already passed — must not fire late")
+        XCTAssertNil(find(plan, slot: "midday"), "1pm already passed, so it must not fire late")
         XCTAssertNotNil(find(plan, slot: "evening"))
     }
 
@@ -301,7 +301,7 @@ final class NotificationPlannerTests: XCTestCase {
     }
 
     func testMilestoneCelebratesAgainAfterAStreakRebuild() {
-        // Hit 14, broke it, climbed back to 7 — that 7 deserves its moment.
+        // Hit 14, broke it, climbed back to 7. That 7 deserves its moment.
         var ctx = context(now: at("2026-08-04", 14), lastActiveDaysAgo: 0, streakLength: 7)
         ctx.lastCelebratedStreak = 14
         XCTAssertEqual(NotificationPlanner.plan(ctx).map(\.id), ["milestone-7"])

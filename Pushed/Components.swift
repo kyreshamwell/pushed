@@ -64,6 +64,11 @@ struct LookSwatch: View {
             }
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            // A hairline, so a light look still has an edge on a light card.
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+            }
             .environment(\.colorScheme, look.style.pinnedColorScheme(custom: look.custom) ?? colorScheme)
             .accessibilityHidden(true)
     }
@@ -112,5 +117,54 @@ struct PreviewData: Equatable {
             && lhs.icon == rhs.icon
             && lhs.dayOffMark == rhs.dayOffMark
             && Calendar.current.isDate(lhs.now, inSameDayAs: rhs.now)
+    }
+}
+
+/// Names the back button on screens pushed from this one. Home hides its
+/// bar, so without this the back button is a bare chevron.
+struct BackButtonTitle: UIViewControllerRepresentable {
+    let title: String
+
+    func makeUIViewController(context: Context) -> Controller {
+        Controller(backTitle: title)
+    }
+
+    func updateUIViewController(_ controller: Controller, context: Context) {
+        controller.backTitle = title
+        controller.apply()
+    }
+
+    final class Controller: UIViewController {
+        var backTitle: String
+
+        init(backTitle: String) {
+            self.backTitle = backTitle
+            super.init(nibName: nil, bundle: nil)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override func didMove(toParent parent: UIViewController?) {
+            super.didMove(toParent: parent)
+            apply()
+        }
+
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            apply()
+        }
+
+        /// The screen this sits in is whichever of the stack's controllers
+        /// it's nested inside.
+        func apply() {
+            guard let stack = navigationController?.viewControllers else { return }
+            var current: UIViewController? = self
+            while let candidate = current, !stack.contains(candidate) {
+                current = candidate.parent
+            }
+            guard let screen = current else { return }
+            screen.navigationItem.backButtonDisplayMode = .default
+            screen.navigationItem.backButtonTitle = backTitle
+        }
     }
 }

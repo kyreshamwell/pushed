@@ -36,12 +36,17 @@ final class HomeWordsTests: XCTestCase {
         let waiting = ContributionSnapshot.sample(streak: 12, quiet: 1).history()
         XCTAssertEqual(HomeWords.today(waiting, count: nil).title, "Not yet today")
         XCTAssertEqual(HomeWords.today(waiting, count: nil).kind, .pending)
+        XCTAssertEqual(HomeWords.today(waiting, count: nil).detail, "Push by midnight to keep your 12-day streak")
+
+        let broken = ContributionSnapshot.sample(streak: 12, quiet: 2).history()
+        XCTAssertEqual(HomeWords.today(broken, count: nil).detail, "Push today to start a streak")
     }
 
     func testTodaysCountOnlyComesFromTodaysData() {
         let now = Date()
         var snapshot = ContributionSnapshot.sample(streak: 12, asOf: now)
         let history = snapshot.history(asOf: now)
+        snapshot.lastDayCount = nil
         XCTAssertNil(HomeWords.todayCount(snapshot, history: history, now: now), "data saved before 1.3")
 
         snapshot.lastDayCount = 4

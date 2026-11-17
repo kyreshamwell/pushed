@@ -60,9 +60,11 @@ struct CustomizeSheet: View {
         .presentationDetents([Self.halfHeight, .large], selection: $detent)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(28)
+        .presentationBackground(Color.card)
         .interactiveDismissDisabled(isBuiltIn && hasChanges)
         .onChange(of: showsMore) { _, showing in
-            if showing { withAnimation(.snappy) { detent = .large } }
+            // Room for the longer list, then back to half so the preview shows.
+            withAnimation(.snappy) { detent = showing ? .large : Self.halfHeight }
         }
         .confirmationDialog("Keep your changes?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
             if let save, canSave {

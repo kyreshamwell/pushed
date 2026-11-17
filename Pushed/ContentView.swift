@@ -92,6 +92,7 @@ struct HomeView: View {
             .refreshable { await model.refresh() }
         }
         .background(Color.page)
+        .background(BackButtonTitle(title: "Home"))
         .navigationTitle("Home")
         .toolbar(.hidden, for: .navigationBar)
         .animation(.snappy, value: model.history?.today)

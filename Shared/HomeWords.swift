@@ -49,12 +49,10 @@ enum HomeWords {
             )
         case .pending:
             let streak = history.streak
-            return Today(
-                kind: .pending,
-                title: "Not yet today",
-                detail: streak > 0 ? "Push by midnight to keep your \(streak)-day streak" : "Push today to start a streak",
-                symbol: "circle.dashed"
-            )
+            let detail = streak > 0 ? "Push by midnight to keep your \(streak)-day streak"
+                : history.canSaveStreak ? "Push today to keep it going"
+                : "Push today to start a streak"
+            return Today(kind: .pending, title: "Not yet today", detail: detail, symbol: "circle.dashed")
         case .off(.rest):
             return Today(kind: .rest, title: "Rest day", detail: "Your streak carries on", symbol: "moon.zzz.fill")
         case .off(.freeze):

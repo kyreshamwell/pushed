@@ -78,6 +78,7 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .background(BackButtonTitle(title: "Settings"))
         .task { await model.refreshPermissionState() }
     }
 

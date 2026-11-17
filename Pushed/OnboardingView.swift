@@ -105,6 +105,7 @@ struct OnboardingView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Color.page)
+        .background(BackButtonTitle(title: "Home"))
         .navigationTitle("Home")
         .toolbar(.hidden, for: .navigationBar)
     }

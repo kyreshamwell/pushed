@@ -43,7 +43,8 @@ extension ContributionSnapshot {
             totalContributions: total,
             recentLevels: levels,
             lastDate: ContributionCalendar.dateFormatter.string(from: now),
-            fetchedAt: now
+            fetchedAt: now,
+            lastDayCount: levels.last.map { [0, 1, 3, 5, 8][min(max($0, 0), 4)] }
         )
     }
 

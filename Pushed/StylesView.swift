@@ -432,7 +432,10 @@ struct StylesView: View {
     private func delete(_ id: UUID) {
         withAnimation(.snappy) {
             store.update { $0.remove(id) }
-            if selection == .saved(id) { selection = .builtIn(.classic) }
+            if selection == .saved(id) {
+                selection = .builtIn(.classic)
+                scrollTarget = selection
+            }
         }
     }
 }
