@@ -2,16 +2,16 @@ import SwiftUI
 import WidgetKit
 
 /// Days drawn the way a theme draws them, wherever they're placed. A whole
-/// graph is three canvases rather than hundreds of views, which keeps it
-/// cheap enough for a widget:
+/// graph is two canvases and a ring rather than hundreds of views, which
+/// keeps it cheap enough for a widget:
 ///
 /// - the quiet layer: empty days, days off, missed days and Marks symbols;
 /// - the active layer: pushed days, marked accentable so a tinted home
 ///   screen paints them in its tint and leaves the rest neutral;
-/// - today's ring, on top of everything.
+/// - today's ring, a plain shape on top of everything.
 ///
-/// Each canvas reaches a little past the grid, so a glow or today's ring at
-/// the edge is never cut off.
+/// Each canvas reaches a little past the grid, so a glow at the edge is
+/// never cut off, and the ring is free to hang outside it.
 struct DayGrid: View {
     @Environment(\.dayOffMark) private var mark
 
@@ -37,7 +37,7 @@ struct DayGrid: View {
     /// The cell ringed as today.
     var today: Int? = nil
 
-    /// Room past the edges for glows and today's ring.
+    /// Room past the edges for the glow around the busiest days.
     static let bleed: CGFloat = 10
 
     var body: some View {
@@ -49,7 +49,9 @@ struct DayGrid: View {
             layer { painter.paintActive(cells, in: &$0) }
                 .widgetAccentable()
             if let today, cells.indices.contains(today) {
-                layer { painter.paintRing(around: cells[today].frame, in: &$0) }
+                FixedPath(path: painter.ring(around: cells[today].frame))
+                    .stroke(theme.todayRing, lineWidth: DayPainter.ringWidth)
+                    .frame(width: size.width, height: size.height)
             }
         }
         .frame(width: size.width, height: size.height, alignment: .topLeading)
@@ -65,6 +67,13 @@ struct DayGrid: View {
         .frame(width: size.width + 2 * bleed, height: size.height + 2 * bleed)
         .padding(-bleed)
     }
+}
+
+/// A path drawn where it was made, whatever frame it's given.
+private struct FixedPath: Shape {
+    let path: Path
+
+    func path(in rect: CGRect) -> Path { path }
 }
 
 extension GraphBand {
@@ -279,22 +288,20 @@ struct DayPainter {
 
     // MARK: Today
 
-    /// A thin ring in the text color, 1.5pt clear of today's square and
-    /// following its corners.
-    func paintRing(around rect: CGRect, in context: inout GraphicsContext) {
-        let line: CGFloat = 1.5
-        let outset = 1.5 + line / 2
+    static let ringWidth: CGFloat = 1.5
+
+    /// The center line of the thin ring around today: 1.5pt clear of the
+    /// square, following its corners the way a CSS outline does.
+    func ring(around rect: CGRect) -> Path {
+        let outset = 1.5 + Self.ringWidth / 2
         let ring = rect.insetBy(dx: -outset, dy: -outset)
         let corner = theme.form == .box ? theme.cornerRadius(for: rect.width) : rect.width * 0.25
-        let path: Path
         if corner >= rect.width / 2 {
-            path = Path(ellipseIn: ring)
+            return Path(ellipseIn: ring)
         } else if corner == 0 {
-            path = Path(ring)
-        } else {
-            path = Path(roundedRect: ring, cornerRadius: corner + outset)
+            return Path(ring)
         }
-        context.stroke(path, with: .color(theme.todayRing), lineWidth: line)
+        return Path(roundedRect: ring, cornerRadius: corner + outset)
     }
 
     // MARK: Symbol sizes

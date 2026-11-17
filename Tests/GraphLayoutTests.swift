@@ -185,6 +185,18 @@ final class GraphLayoutTests: XCTestCase {
         XCTAssertTrue(bands[0].monthLabels().isEmpty)
     }
 
+    func testTodaysRingSitsClearOfItsSquareInsideTheMargin() {
+        let square = CGRect(x: 320, y: 94, width: 12, height: 12)
+        for style in WidgetStyle.builtIn {
+            let ring = DayPainter(theme: style.theme(for: .dark), mark: .ring).ring(around: square)
+            // The ring's center line is 2.25pt out, so its outer edge is 3pt
+            // out: well inside the 16pt margin, never clipped.
+            XCTAssertEqual(ring.boundingRect.minX, square.minX - 2.25, accuracy: 0.01, "\(style)")
+            XCTAssertEqual(ring.boundingRect.maxX, square.maxX + 2.25, accuracy: 0.01, "\(style)")
+            XCTAssertEqual(ring.boundingRect.maxY, square.maxY + 2.25, accuracy: 0.01, "\(style)")
+        }
+    }
+
     // MARK: - Month names
 
     func testMonthNamesSitOverTheWeekEachMonthStarts() {
