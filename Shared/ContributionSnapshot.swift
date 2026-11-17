@@ -9,6 +9,9 @@ struct ContributionSnapshot: Codable {
     // to a real date so the grid can draw month/weekday labels.
     let lastDate: String
     let fetchedAt: Date
+    /// Contributions on the last day, as GitHub counts them. Nil for data
+    /// saved before 1.3, which only kept the levels.
+    var lastDayCount: Int? = nil
 
     static let defaultsKey = "latest-contribution-snapshot"
 
@@ -37,7 +40,8 @@ struct ContributionSnapshot: Codable {
             totalContributions: calendar.totalContributions,
             recentLevels: Array(recent),
             lastDate: days.last?.date ?? "",
-            fetchedAt: Date()
+            fetchedAt: Date(),
+            lastDayCount: days.last?.contributionCount
         )
     }
 

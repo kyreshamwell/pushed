@@ -5,13 +5,6 @@ enum AppConfig {
     static let keychainAccessGroup = "com.kyreshamwell.pushed.shared"
     static let keychainAccount = "github-pat"
     static let usernameDefaultsKey = "github-username"
-    static let widgetWeeksKey = "widget-weeks" // how many weeks the widget displays
-
-    static var widgetWeeks: Int {
-        let stored = sharedDefaults.integer(forKey: widgetWeeksKey)
-        return stored == 0 ? 26 : stored
-    }
-
     static let streakIconKey = "streak-icon"
 
     /// Any single emoji, or `StreakIcon.none` for the bare number.
