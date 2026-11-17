@@ -138,7 +138,7 @@
 		5DFF3012874A2F6D0A471656 /* PushedWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushedWidget.swift; sourceTree = "<group>"; };
 		5EC5A1FC6ABF2843BC34E681 /* CustomWidgetStyleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWidgetStyleTests.swift; sourceTree = "<group>"; };
 		5FB8F38428CF4859140DC80E /* GitHubContributionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubContributionsService.swift; sourceTree = "<group>"; };
-		621F674DC7CA93253B2F6E7F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		621F674DC7CA93253B2F6E7F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		65C90674B989E8A692A52344 /* DebugNotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugNotificationsView.swift; sourceTree = "<group>"; };
 		664C4B7FBA91D5C599AF285C /* NotificationPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPlanner.swift; sourceTree = "<group>"; };
 		67E6FC3631B5B27834A19415 /* PushedTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PushedTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -170,7 +170,7 @@
 		E9E56B0C4271B386A35C7E51 /* WidgetStyleGallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStyleGallery.swift; sourceTree = "<group>"; };
 		EA1972243E57FD75928BDB3F /* StreakHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakHistory.swift; sourceTree = "<group>"; };
 		ECC31AA2FBC17C670BA766E2 /* RenderPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderPreviews.swift; sourceTree = "<group>"; };
-		F70CE2C5FB12EE2315624FD1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F70CE2C5FB12EE2315624FD1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F72366EB0030B9C0E3969A8C /* StreakProtectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakProtectionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 

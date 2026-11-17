@@ -230,4 +230,96 @@ final class RenderPreviews: XCTestCase {
             }
         }
     }
+
+    /// The widgets for the App Store screenshots: each card on its own with
+    /// a clear background, drawn large so it stays sharp once composed. The
+    /// streak runs over weekend rest days and one freeze, so the new marks
+    /// show. `Scripts/compose_screenshots.py` lays these out.
+    func testRenderStoreWidgets() throws {
+        guard let base = outputFolder else { throw XCTSkip("set PUSHED_RENDER_DIR to draw the previews") }
+        let folder = base.appendingPathComponent("store")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+
+        // A Wednesday: this week has days done and days still to come.
+        let now = ContributionCalendar.dateFormatter.date(from: "2026-10-21")!
+        let rested = weekendsOff(.sample(streak: 16, asOf: now), asOf: now)
+        var levels = rested.recentLevels
+        levels[levels.count - 2] = 0 // Tuesday, covered by the freeze
+        let snapshot = ContributionSnapshot(
+            totalContributions: rested.totalContributions, recentLevels: levels,
+            lastDate: rested.lastDate, fetchedAt: now
+        )
+        let protection = StreakProtection(
+            schedules: [.init(from: "2026-01-01", weekdays: [1, 7])],
+            claims: ["2026-10-20": .freeze],
+            trackedSince: "2026-08-01"
+        )
+
+        func card(
+            _ name: String, _ family: WidgetFamily, _ style: WidgetStyle, _ layout: WidgetLayout,
+            weeks: Int = 26, stat: WidgetStat = .streak, custom: CustomWidgetStyle = .default
+        ) throws {
+            let view = WidgetPreviewCard(
+                snapshot: snapshot, family: family, style: style, layout: layout, weeks: weeks,
+                stat: stat, icon: "🔥", custom: custom, protection: protection, dayOffMark: .stripes, now: now
+            )
+            .environment(\.colorScheme, .dark)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 4
+            let image = try XCTUnwrap(renderer.uiImage, "\(name) didn't render")
+            try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("\(name).png"))
+        }
+
+        // Every built-in style in every layout and size.
+        for style in WidgetStyle.builtIn {
+            for layout in WidgetLayout.allCases {
+                for (family, size) in [(WidgetFamily.systemSmall, "small"), (.systemMedium, "medium"), (.systemLarge, "large")] {
+                    try card("\(style.rawValue)-\(layout.rawValue)-\(size)", family, style, layout)
+                }
+            }
+        }
+
+        // Custom styles, one per shape.
+        var lime = CustomWidgetStyle.default
+        lime.background = RGBAColor(hex: 0x141414)
+        lime.usesGradient = false
+        lime.squares = RGBAColor(hex: 0xA3E635)
+        lime.font = .condensed
+        lime.weight = .heavy
+        lime.glows = true
+        let looks: [(String, CustomWidgetStyle, CellShapeChoice)] = [
+            ("heart", CustomWidgetStyle.starters[4], .heart),
+            ("hexagon", CustomWidgetStyle.starters[1], .hexagon),
+            ("star", CustomWidgetStyle.starters[2], .star),
+            ("diamond", CustomWidgetStyle.starters[0], .diamond),
+            ("dot", CustomWidgetStyle.starters[3], .dot),
+            ("square", lime, .square),
+        ]
+        for (name, base, shape) in looks {
+            var custom = base
+            custom.shape = shape
+            custom.missedSquares = RGBAColor(hex: custom.usesLightText ? 0xE5484D : 0xD93D42)
+            for layout in WidgetLayout.allCases {
+                for (family, size) in [(WidgetFamily.systemSmall, "small"), (.systemMedium, "medium"), (.systemLarge, "large")] {
+                    try card("custom-\(name)-\(layout.rawValue)-\(size)", family, .custom, layout, custom: custom)
+                }
+            }
+        }
+
+        // The Lock Screen, white on clear the way iOS tints it.
+        for (family, size, name) in [
+            (WidgetFamily.accessoryCircular, CGSize(width: 76, height: 76), "circular"),
+            (.accessoryRectangular, CGSize(width: 172, height: 76), "rectangular"),
+            (.accessoryInline, CGSize(width: 260, height: 24), "inline"),
+        ] {
+            let view = LockScreenView(snapshot: snapshot, family: family, protection: protection, now: now, icon: "🔥", dayOffMark: .stripes)
+                .frame(width: size.width, height: size.height)
+                .foregroundStyle(.white)
+                .environment(\.colorScheme, .dark)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 4
+            let image = try XCTUnwrap(renderer.uiImage)
+            try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("lock-\(name).png"))
+        }
+    }
 }
