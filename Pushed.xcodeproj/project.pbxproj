@@ -10,6 +10,7 @@
 		08E8FD884EE9D16D1CB58E55 /* GraphLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F94D83FBC5FB5E83CA4ECCE /* GraphLayoutTests.swift */; };
 		0914054F8A073404D03910B3 /* SampleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = C210392403CC7D9EC48129B5 /* SampleSnapshot.swift */; };
 		09722BDE650C810F0E7EB3DB /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B082ED41F40B9E4249666E6 /* NotificationScheduler.swift */; };
+		09AD2CC94F29B09A4A43EB84 /* StyleLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9A7CE8FCDB1FA9FBFF67FE /* StyleLibraryStore.swift */; };
 		09D2FCF6CC7BC3C121886642 /* StyleLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA188378D027BFE3661B74C /* StyleLibrary.swift */; };
 		0F8F12E58D8E78FC327C94FA /* LockScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C47D328901A7477BB8FC7E2D /* LockScreenView.swift */; };
 		0FA5664D00FC951A5D0E6611 /* DemoMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5921B643B6E6718C671B3F23 /* DemoMode.swift */; };
@@ -83,6 +84,7 @@
 		BF53E5D80750D8E1BA4371D1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 621F674DC7CA93253B2F6E7F /* PrivacyInfo.xcprivacy */; };
 		C403A9CA3FC4B44A212078F4 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB3DEFB8B77FC966431D7EC /* AppConfigTests.swift */; };
 		C47C858B7694044E8ABD2F94 /* StreakProtectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F72366EB0030B9C0E3969A8C /* StreakProtectionTests.swift */; };
+		CB9FF82438EAC3D88FB01CDD /* StyleLibraryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A3B965D48BDDB107AD9BEB6 /* StyleLibraryStoreTests.swift */; };
 		CFE6B6CC29B6C174006D8D81 /* CustomWidgetStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01686006985EB29F6E040356 /* CustomWidgetStyle.swift */; };
 		D1ED91D53094EABC48C92FD0 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFB708858C0AE4863B86A02 /* AppConfig.swift */; };
 		D2DB709F34BD80A598E39BED /* StreakIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5360FCFAA9469CAC0C10F4 /* StreakIconTests.swift */; };
@@ -90,6 +92,8 @@
 		D941A6B29C44C6C5BBB2D8BA /* ContributionGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768B00CB100AB92E54E15EC8 /* ContributionGridView.swift */; };
 		DA16CE916BF45234A02A295D /* DayGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C157E4CD9986861B07231A91 /* DayGrid.swift */; };
 		E3CA1FD2716AA626E1065F6F /* SelfCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5A48E57F4CB00C97CA6347 /* SelfCheck.swift */; };
+		E6628B66990E41BBE59C2D01 /* StyleLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9A7CE8FCDB1FA9FBFF67FE /* StyleLibraryStore.swift */; };
+		E6E2647ED0BBD7E94AABCACF /* StyleLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9A7CE8FCDB1FA9FBFF67FE /* StyleLibraryStore.swift */; };
 		E7736AC7475D6AABEE08C67C /* StreakIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAE6B55ECF230C2D6CADFFC /* StreakIcon.swift */; };
 		EC8DB1B82BD3FF7157E85726 /* StyleLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA188378D027BFE3661B74C /* StyleLibrary.swift */; };
 		ED2C4761C5DDCF6E65DDD184 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFB708858C0AE4863B86A02 /* AppConfig.swift */; };
@@ -130,7 +134,9 @@
 		01686006985EB29F6E040356 /* CustomWidgetStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWidgetStyle.swift; sourceTree = "<group>"; };
 		0A84DCF1096569A79BF32B6F /* Pushed.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Pushed.entitlements; sourceTree = "<group>"; };
 		0B082ED41F40B9E4249666E6 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
+		0F9A7CE8FCDB1FA9FBFF67FE /* StyleLibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleLibraryStore.swift; sourceTree = "<group>"; };
 		160810259FC8A024A879E04B /* WidgetOptionsIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetOptionsIntent.swift; sourceTree = "<group>"; };
+		1A3B965D48BDDB107AD9BEB6 /* StyleLibraryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleLibraryStoreTests.swift; sourceTree = "<group>"; };
 		224F538788DB4AC5BD80B558 /* StyleLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleLibraryTests.swift; sourceTree = "<group>"; };
 		254B089F95A319A42A70A8D2 /* LockScreenWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenWidget.swift; sourceTree = "<group>"; };
 		2EB3DEFB8B77FC966431D7EC /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
@@ -237,6 +243,7 @@
 				3FAE6B55ECF230C2D6CADFFC /* StreakIcon.swift */,
 				7855271EB0947B480EE3EB36 /* StreakProtection.swift */,
 				BAA188378D027BFE3661B74C /* StyleLibrary.swift */,
+				0F9A7CE8FCDB1FA9FBFF67FE /* StyleLibraryStore.swift */,
 				518E378FDF8CFFC9069799E3 /* TestScenario.swift */,
 				E68E8ED2CC67D3077592E375 /* WidgetStyle.swift */,
 			);
@@ -266,6 +273,7 @@
 				ECC31AA2FBC17C670BA766E2 /* RenderPreviews.swift */,
 				AF5360FCFAA9469CAC0C10F4 /* StreakIconTests.swift */,
 				F72366EB0030B9C0E3969A8C /* StreakProtectionTests.swift */,
+				1A3B965D48BDDB107AD9BEB6 /* StyleLibraryStoreTests.swift */,
 				224F538788DB4AC5BD80B558 /* StyleLibraryTests.swift */,
 				40EF11801E5E12EE4E6BFAF6 /* TestScenarioTests.swift */,
 				8B783BED2905B46D710B79BE /* WidgetStyleTests.swift */,
@@ -442,6 +450,8 @@
 				360A3AEABBDF7ED9C47CEC35 /* StreakProtection.swift in Sources */,
 				C47C858B7694044E8ABD2F94 /* StreakProtectionTests.swift in Sources */,
 				09D2FCF6CC7BC3C121886642 /* StyleLibrary.swift in Sources */,
+				E6E2647ED0BBD7E94AABCACF /* StyleLibraryStore.swift in Sources */,
+				CB9FF82438EAC3D88FB01CDD /* StyleLibraryStoreTests.swift in Sources */,
 				35A400A893433D8C3CA54C0D /* StyleLibraryTests.swift in Sources */,
 				9F1EB77B28E63CF31CC27FA0 /* TestScenario.swift in Sources */,
 				F0D91B2C24CB8A99A6BA808A /* TestScenarioTests.swift in Sources */,
@@ -481,6 +491,7 @@
 				A3BE2AFAB7AD9512E178CD58 /* StreakIconPicker.swift in Sources */,
 				33CB0FF3B0C0F297C2BE6F10 /* StreakProtection.swift in Sources */,
 				EC8DB1B82BD3FF7157E85726 /* StyleLibrary.swift in Sources */,
+				E6628B66990E41BBE59C2D01 /* StyleLibraryStore.swift in Sources */,
 				59686A95603E106D39EE4FFA /* TestScenario.swift in Sources */,
 				A0245DF802543A5DFFFDF61E /* WidgetStyle.swift in Sources */,
 				5606700E3894A58D7ADAC736 /* WidgetStyleGallery.swift in Sources */,
@@ -513,6 +524,7 @@
 				8DDC6C5316DEC13038E974B8 /* StreakIcon.swift in Sources */,
 				A6F34FFB9B18C911E6AB0C1F /* StreakProtection.swift in Sources */,
 				644999E106B9D4C0AE4248CB /* StyleLibrary.swift in Sources */,
+				09AD2CC94F29B09A4A43EB84 /* StyleLibraryStore.swift in Sources */,
 				8A3048B36F17FD77A7791173 /* TestScenario.swift in Sources */,
 				6721AB2CC9045B7D1227D5BC /* WidgetOptionsIntent.swift in Sources */,
 				A2B2EE6600EA5D4E802C1416 /* WidgetStyle.swift in Sources */,
