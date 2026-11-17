@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Styles</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3FD26A}a:hover{color:#6BE38C}
+button{font-family:inherit}
+.pz-press{transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease}
+.pz-press:active{transform:scale(0.96)}
+.pz-scroll{scrollbar-width:none}
+.pz-scroll::-webkit-scrollbar{display:none}
+.pz-fade{transition:opacity .2s ease, transform .25s cubic-bezier(.2,.8,.2,1)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #000000; color: #F5F5F7; font-family: Inter, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column">
+  <div style="height: 56px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="Home.dc.html" style="display: flex; align-items: center; gap: 2px; text-decoration: none; font-size: 17px; height: 44px; padding: 0 8px">
+      <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"></path></svg>
+      <span>Home</span>
+    </a>
+    <span style="font-size: 17px; font-weight: 600">Styles</span>
+    <span style="width: 76px"></span>
+  </div>
+
+  <div style="height: 300px; flex: none; display: flex; align-items: center; justify-content: center">
+    <div class="pz-fade" style="width: {{pw}}px; height: {{ph}}px; position: relative; filter: drop-shadow(0 18px 30px rgba(0,0,0,0.55))">
+      <div style="position: absolute; left: 0; top: 0; transform: scale({{ps}}); transform-origin: top left">
+        <dc-import name="Widget" look="{{sel}}" family="{{fam}}" shape="{{shape}}" accent="{{accent}}" hint-size="364px,170px"></dc-import>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: center; padding-bottom: 18px; flex: none">
+    <div style="display: flex; background: #1C1C1E; border-radius: 10px; padding: 2px">
+      <sc-for list="{{fams}}" as="f" hint-placeholder-count="3">
+        <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.on}}" class="pz-press" style="border: 0; height: 32px; min-width: 84px; border-radius: 8px; font-size: 13px; font-weight: 600; background: {{f.bg}}; color: {{f.ink}}; cursor: pointer">{{f.label}}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 20px 10px; flex: none">
+    <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.01em">Looks</span>
+    <span style="font-size: 13px; color: #8E8E93">Tap to preview · circle to rotate</span>
+  </div>
+  <div class="pz-scroll" style="display: flex; gap: 12px; overflow-x: auto; padding: 4px 20px 16px; flex: none">
+    <sc-for list="{{looks}}" as="lk" hint-placeholder-count="5">
+      <div style="position: relative; flex: none">
+        <button type="button" onClick="{{lk.pick}}" aria-label="Preview {{lk.name}}" class="pz-press" style="border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 96px">
+          <div style="width: 92px; height: 92px; border-radius: 16px; overflow: hidden; box-shadow: {{lk.ring}}">
+            <div style="transform: scale(0.5412); transform-origin: top left; width: 170px; height: 170px">
+              <dc-import name="Widget" look="{{lk.id}}" family="small" hint-size="170px,170px"></dc-import>
+            </div>
+          </div>
+          <span style="font-size: 13px; font-weight: {{lk.weight}}; color: {{lk.ink}}">{{lk.name}}</span>
+        </button>
+        <button type="button" onClick="{{lk.toggle}}" aria-label="{{lk.toggleLabel}}" aria-pressed="{{lk.inRot}}" class="pz-press" style="position: absolute; top: -10px; right: -12px; width: 44px; height: 44px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0">
+          <span style="width: 24px; height: 24px; border-radius: 12px; background: {{lk.chkBg}}; border: 2px solid {{lk.chkRing}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.5)">
+            <sc-if value="{{lk.inRot}}" hint-placeholder-val="{{ false }}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+            </sc-if>
+          </span>
+        </button>
+      </div>
+    </sc-for>
+    <button type="button" class="pz-press" aria-label="New look" style="flex: none; width: 92px; height: 92px; border-radius: 16px; border: 1.5px dashed #3A3A3C; background: transparent; color: #8E8E93; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      <span style="font-size: 12px; font-weight: 600">New</span>
+    </button>
+  </div>
+
+  <div style="margin: 4px 16px 0; background: #1C1C1E; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; flex: none">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <span style="font-size: 15px; font-weight: 600">Rotation</span>
+      <span style="font-size: 12px; color: #8E8E93">{{rotNote}}</span>
+    </div>
+    <sc-if value="{{hasRot}}" hint-placeholder-val="{{ true }}">
+      <div class="pz-scroll" style="display: flex; gap: 8px; overflow-x: auto">
+        <sc-for list="{{rot}}" as="r" hint-placeholder-count="3">
+          <div style="flex: none; display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 6px; border-radius: 17px; background: {{r.chip}}">
+            <span style="width: 22px; height: 22px; border-radius: 11px; background: {{r.dot}}; border: 1px solid rgba(255,255,255,0.12)"></span>
+            <span style="font-size: 12px; font-weight: 600; color: {{r.dayInk}}">{{r.day}}</span>
+            <span style="font-size: 12px; color: #D1D1D6">{{r.name}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{noRot}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 13px; color: #8E8E93; line-height: 1.4">Tap the circle on a look to add it. Your widget wears a different one each day.</span>
+    </sc-if>
+  </div>
+
+  <div style="padding: 16px 16px 0; flex: none">
+    <button type="button" onClick="{{openSheet}}" class="pz-press" style="width: 100%; height: 50px; border: 0; border-radius: 14px; background: #F5F5F7; color: #000; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"></path></svg>
+      <span>Customize {{selName}}</span>
+    </button>
+  </div>
+
+  <sc-if value="{{sheet}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: 356px; bottom: 0; background: rgba(0,0,0,0.35)"></div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 488px; background: #1C1C1E; border-radius: 28px 28px 0 0; padding: 8px 20px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.6)">
+      <div style="display: flex; justify-content: center"><span style="width: 36px; height: 5px; border-radius: 3px; background: #48484A"></span></div>
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="font-size: 20px; font-weight: 700">Customize {{selName}}</span>
+        <button type="button" onClick="{{closeSheet}}" style="border: 0; background: transparent; color: #3FD26A; font-size: 17px; font-weight: 600; height: 44px; padding: 0 4px; cursor: pointer">Done</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 13px; font-weight: 600; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.05em">Squares</span>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{shapes}}" as="s" hint-placeholder-count="4">
+            <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.on}}" class="pz-press" style="height: 72px; border-radius: 14px; border: 2px solid {{s.ring}}; background: #2C2C2E; color: #F5F5F7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+              <span style="width: 20px; height: 20px; border-radius: {{s.r}}; background: {{s.fill}}"></span>
+              <span style="font-size: 12px; font-weight: 600">{{s.label}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 13px; font-weight: 600; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.05em">Color</span>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <sc-for list="{{swatches}}" as="w" hint-placeholder-count="7">
+            <button type="button" onClick="{{w.pick}}" aria-label="{{w.label}}" aria-pressed="{{w.on}}" class="pz-press" style="width: 44px; height: 44px; border-radius: 22px; border: 0; padding: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center">
+              <span style="width: 36px; height: 36px; border-radius: 18px; background: {{w.fill}}; box-shadow: {{w.ring}}"></span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0; background: #2C2C2E; border-radius: 14px; overflow: hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; height: 48px; padding: 0 16px; border-bottom: 1px solid #3A3A3C">
+          <span style="font-size: 15px">Glow on busy days</span>
+          <span style="width: 51px; height: 31px; border-radius: 16px; background: #3FD26A; position: relative; display: inline-block"><span style="position: absolute; right: 2px; top: 2px; width: 27px; height: 27px; border-radius: 14px; background: #fff"></span></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; height: 48px; padding: 0 16px">
+          <span style="font-size: 15px">More options</span>
+          <span style="font-size: 15px; color: #8E8E93">Background, font, spacing</span>
+        </div>
+      </div>
+
+      <button type="button" onClick="{{closeSheet}}" class="pz-press" style="height: 50px; border: 0; border-radius: 14px; background: #3FD26A; color: #04150A; font-size: 16px; font-weight: 700; cursor: pointer">Save as my look</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'classic', fam: 'medium', rot: ['classic', 'aurora', 'ember'], sheet: false, shape: 'auto', accent: '' };
+  }
+  renderVals() {
+    const s = this.state;
+    const META = {
+      classic: { name: 'Classic', dot: '#26A641' },
+      aurora: { name: 'Aurora', dot: 'linear-gradient(135deg, #2DD4BF, #A78BFA)' },
+      ember: { name: 'Ember', dot: 'linear-gradient(135deg, #FFC46B, #F2761B)' },
+      terminal: { name: 'Terminal', dot: '#22C55E' },
+      paper: { name: 'Paper', dot: '#E2DACB' },
+      marks: { name: 'Marks', dot: '#F2F2F2' }
+    };
+    const ids = ['classic', 'aurora', 'ember', 'terminal', 'paper', 'marks'];
+    const sizes = { small: [170, 170, 1.4], medium: [364, 170, 1], large: [364, 382, 0.72] };
+    const [w, h, ps] = sizes[s.fam];
+
+    const looks = ids.map((id) => {
+      const inRot = s.rot.indexOf(id) >= 0;
+      const on = s.sel === id;
+      return {
+        id, name: META[id].name, inRot,
+        ring: on ? '0 0 0 2.5px #000, 0 0 0 4.5px #F5F5F7' : '0 0 0 1px rgba(255,255,255,0.08)',
+        weight: on ? 700 : 500,
+        ink: on ? '#F5F5F7' : '#AEAEB2',
+        chkBg: inRot ? '#3FD26A' : 'rgba(0,0,0,0.55)',
+        chkRing: inRot ? '#3FD26A' : 'rgba(255,255,255,0.7)',
+        toggleLabel: (inRot ? 'Remove ' : 'Add ') + META[id].name + (inRot ? ' from rotation' : ' to rotation'),
+        pick: () => this.setState({ sel: id, shape: 'auto', accent: '' }),
+        toggle: () => {
+          const rot = inRot ? s.rot.filter((x) => x !== id) : s.rot.concat([id]);
+          this.setState({ rot, sel: id });
+        }
+      };
+    });
+
+    const days = ['Today', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'];
+    const rot = s.rot.map((id, i) => ({
+      day: days[i % 7], name: META[id].name, dot: META[id].dot,
+      chip: i === 0 ? '#2C2C2E' : '#242426',
+      dayInk: i === 0 ? '#3FD26A' : '#8E8E93'
+    }));
+
+    const fams = [['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']].map(([id, label]) => ({
+      label, on: s.fam === id,
+      bg: s.fam === id ? '#636366' : 'transparent',
+      ink: s.fam === id ? '#FFFFFF' : '#AEAEB2',
+      pick: () => this.setState({ fam: id })
+    }));
+
+    const shapes = [['auto', 'Look', '5px'], ['square', 'Square', '3px'], ['rounded', 'Rounded', '6px'], ['dot', 'Dot', '10px']].map(([id, label, r]) => ({
+      label, r, on: s.shape === id,
+      ring: s.shape === id ? '#3FD26A' : 'transparent',
+      fill: s.shape === id ? '#3FD26A' : '#8E8E93',
+      pick: () => this.setState({ shape: id })
+    }));
+
+    const swatchList = [['', 'Look colors'], ['#39D353', 'Green'], ['#5B8DEF', 'Blue'], ['#A78BFA', 'Violet'], ['#F472B6', 'Pink'], ['#F2761B', 'Orange'], ['#FACC15', 'Gold']];
+    const swatches = swatchList.map(([hex, label]) => ({
+      label, on: s.accent === hex,
+      fill: hex || 'conic-gradient(#39D353, #5B8DEF, #A78BFA, #F472B6, #F2761B, #FACC15, #39D353)',
+      ring: s.accent === hex ? '0 0 0 3px #1C1C1E, 0 0 0 5px #F5F5F7' : 'none',
+      pick: () => this.setState({ accent: hex })
+    }));
+
+    const n = s.rot.length;
+    return {
+      sel: s.sel, fam: s.fam, shape: s.shape, accent: s.accent,
+      selName: META[s.sel].name,
+      pw: Math.round(w * ps), ph: Math.round(h * ps), ps,
+      fams, looks, rot, shapes, swatches,
+      hasRot: n > 0, noRot: n === 0,
+      rotNote: n === 0 ? 'Off' : n === 1 ? 'Stays on one look' : n + ' looks · changes at midnight',
+      sheet: s.sheet,
+      openSheet: () => this.setState({ sheet: true }),
+      closeSheet: () => this.setState({ sheet: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

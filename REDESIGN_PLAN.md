@@ -4,9 +4,23 @@ Goal: same app, less confusion, premium look. It should feel like a widget app f
 Ships as one release (1.3).
 
 **Source of truth for the look:** the design canvas "Pushed Redesign"
-(https://claude.ai/artifact/UrGWwG4v5WPeDceNFTX4Q1). Every step below is built to
-match it and checked against it in the simulator with screenshots. The widget math
-lives in its `Widget.dc.html` board and should be ported, not reinvented.
+(https://claude.ai/artifact/UrGWwG4v5WPeDceNFTX4Q1). A copy of its boards lives in
+`Design/1.3-redesign/` so work here doesn't need the link. Every step below is built
+to match it and checked against it in the simulator with screenshots. The widget math
+lives in `Widget.dc.html` and should be ported, not reinvented.
+
+Work happens on the branch `feature/redesign`.
+
+## Decisions (2026-11-17)
+
+- **Range is removed.** No Range in Edit Widget and no time range setting in the app.
+  Every widget fills its frame, and widgets set to a range today switch to filling.
+- **Edit Widget keeps** Style (gains Marks), Custom Style (only shown when Style is
+  Custom), Layout and Show. Style and Custom Style stay separate, because merging them
+  would reset the style on every widget people already placed.
+- **GitHub repo renamed** to `kyreshamwell/pushed`. Old links redirect.
+- **Old worktree** `.claude/worktrees/bold-fermat-11f679` gets deleted once the copy
+  pass lands. It only held an uncommitted em dash cleanup of the 1.1 code.
 
 ## Guiding ideas
 
@@ -23,7 +37,7 @@ lives in its `Widget.dc.html` board and should be ported, not reinvented.
   the grid meets the edges exactly.
 - Results on an iPhone Pro Max: Small about 9 weeks, Medium about 22 weeks, Large
   about 40 weeks in two rows of weeks (older on top, the bottom row ends today).
-- Range becomes "Show up to" (a cap), not a fixed 4, 13, 26 or 52 weeks.
+- No Range: each size always shows the weeks that fill it.
 
 ### Header
 - Small: flame plus streak number on the left, a check circle for today on the right.
@@ -73,11 +87,12 @@ Out of scope. The smallest (circular) one may get a refresh if it clearly helps.
     square shape (Look, Square, Rounded, Dot), color swatches, glow, More options
     (background, font, spacing), and "Save as my look".
   - A "New" card at the end of the row for starting from scratch.
-- **Settings (behind the gear):** Widget (Show up to), Streak (Rest days, Freezes),
-  Reminders (three switches), GitHub (Account, Refresh now), version at the bottom.
-  Testing stays in debug builds only.
+- **Settings (behind the gear):** Streak (Rest days, Freezes, Streak icon, Day off
+  mark), Reminders (three switches), GitHub (Account, Refresh now), version at the
+  bottom. Testing stays in debug builds only. Every setting the app has today stays
+  reachable somewhere.
 - Copy: short, no em dashes, no instruction paragraphs.
-- Simplify Edit Widget options: drop "Same as app" and reduce the parameters.
+- Edit Widget options: Range goes (see Decisions).
 
 ## Confirmed bugs to fix in the redesign
 
@@ -90,11 +105,16 @@ Out of scope. The smallest (circular) one may get a refresh if it clearly helps.
 
 ## Rename cleanup
 
-Code and targets are already "Pushed". What remains:
-- GitHub repo `git-widget` becomes `pushed` (GitHub redirects the old URL), then update the remote.
-- Remove the stale worktree in `.claude/worktrees/`.
-- Rename `StreakWidgetView` to `PushedWidgetView`.
-- Local folder `git-streak-widget` becomes `pushed`. Do this last, since it moves the working session.
+Code and targets are already "Pushed".
+- Done: GitHub repo renamed to `kyreshamwell/pushed` and the remote updated.
+- Done: `StreakWidgetView` renamed to `PushedWidgetView`.
+- After the copy pass: delete the stale worktree in `.claude/worktrees/` and its branch.
+- Last, by the user: rename the local folder `git-streak-widget` to `pushed`. It moves
+  the working session, and Claude's memory folder for this project is keyed by the path,
+  so copy it to the new key too.
+- Outside this repo: the landing page (`~/Documents/pushed-landing/lib/site.ts`) and the
+  App Store privacy policy URL still use the old GitHub name. They work through the
+  redirect but should be updated.
 
 ## App Store
 
@@ -103,20 +123,20 @@ description and keywords, and a listing that leads with the widget.
 
 ## Order of work (for agents)
 
-0. ~~Design mockups~~. Done and approved in direction. Small changes may still come up.
-1. **Widget engine:** the fill-the-frame sizing, headers, today ring and Large labels
-   in `Shared/ContributionGridView.swift` and `Shared/StreakWidgetView.swift`.
-2. **Looks:** revamp the five built-ins and add Marks (`Shared/WidgetStyle.swift`,
-   the `WidgetStyle` enum and its intent options).
-3. **Styles screen:** replaces `WidgetStyleGallery.swift`, `RotationView.swift` and
-   folds in `CustomStyleEditor.swift`. Includes both bug fixes.
-4. **Home and Settings:** rebuild `ContentView.swift` into Home plus a Settings screen.
-5. **Widget options:** simplify `WidgetOptionsIntent.swift`.
-6. **Copy pass** across the app.
-7. **Rename cleanup** (can run in parallel with anything; the local folder move goes last).
-8. **App Store** screenshots and listing.
+0. ~~Design mockups~~. Done and approved.
+1. **Widget phase (one agent):** the fill-the-frame engine, headers, today ring and
+   Large labels (`Shared/ContributionGridView.swift`, `Shared/PushedWidgetView.swift`),
+   the five revamped looks plus Marks (`Shared/WidgetStyle.swift`), and removing Range
+   (`PushedWidget/WidgetOptionsIntent.swift`, `PushedWidget/Provider.swift`).
+2. **App phase (one agent):** the Styles screen (replaces `WidgetStyleGallery.swift` and
+   `RotationView.swift`, folds in `CustomStyleEditor.swift`, includes both bug fixes),
+   Home and Settings (rebuild `ContentView.swift`), and the copy pass.
+3. **QA phase:** every screen, look and size checked on a scratch simulator against
+   the canvas, the full test suite, and widgets placed on a scratch home screen.
+4. **Cleanup:** the em dash sweep for anything left, the old worktree, version notes.
+5. **App Store** screenshots and listing.
 
-Steps 1 and 2 land before 3 and 4, since the app's previews draw the real widget.
-Step 7 is independent. Every step is checked in the simulator against the canvas,
-with screenshots, before it's called done. Automate widgets on a scratch simulator,
-not the iPhone 17 Pro Max one that holds the user's home screen.
+Phases run one after another, since the app's previews draw the real widget. Every
+phase keeps the full test suite passing and adds tests for new logic. Automate on the
+scratch simulators "Pushed QA Widget" and "Pushed QA App", never on the iPhone 17 Pro
+Max one that holds the user's home screen.

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The five looks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1000px; height: 1180px; box-sizing: border-box; padding: 64px; background: #0B0B0C; color: #F5F5F7; font-family: Inter, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <h1 style="margin: 0; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">The five looks, revamped</h1>
+    <p style="margin: 0; font-size: 17px; color: #A1A1A6; line-height: 1.5; max-width: 760px">Same five names, one shared layout. Each look changes only color, square shape, type and backdrop, so switching never moves anything.</p>
+  </div>
+  <sc-for list="{{looks}}" as="lk" hint-placeholder-count="5">
+    <div style="display: flex; gap: 32px; align-items: center">
+      <div style="width: 230px; display: flex; flex-direction: column; gap: 6px; flex: none">
+        <span style="font-size: 22px; font-weight: 700">{{lk.name}}</span>
+        <span style="font-size: 14px; color: #A1A1A6; line-height: 1.45">{{lk.note}}</span>
+      </div>
+      <dc-import name="Widget" look="{{lk.id}}" family="small" hint-size="170px,170px"></dc-import>
+      <dc-import name="Widget" look="{{lk.id}}" family="medium" hint-size="364px,170px"></dc-import>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      looks: [
+        { id: 'classic', name: 'Classic', note: "GitHub's real dark graph: its exact greens, near-square corners, its #0D1117 ground." },
+        { id: 'aurora', name: 'Aurora', note: 'Deep navy with teal and violet light. Busy days glow softly. Gradient number.' },
+        { id: 'ember', name: 'Ember', note: 'Warm black, five steps from coal to flame. Busy days glow like embers.' },
+        { id: 'terminal', name: 'Terminal', note: 'Phosphor green in monospace, sharp pixels and faint scanlines.' },
+        { id: 'paper', name: 'Paper', note: 'Ink dots on warm paper with a serif number. The one light look.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
