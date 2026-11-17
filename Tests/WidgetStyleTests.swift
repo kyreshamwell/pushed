@@ -116,24 +116,29 @@ final class WidgetStyleTests: XCTestCase {
         }
     }
 
-    func testTerminalTellsAnEmptyDayFromAQuietOneByShape() {
-        // Filled dark green against filled dim green was the problem. Empty
-        // days are hollow now, and the first level is plainly lit.
+    func testTerminalTellsAnEmptyDayFromAQuietOne() {
+        // Filled dark green against filled dim green was the 1.2 problem.
+        // The 1.3 look fills empty days in a green that all but disappears
+        // into the backdrop, and lights the first level well clear of it.
         let theme = WidgetStyle.terminal.theme(for: .dark)
-        XCTAssertTrue(theme.outlinesEmpty)
         for hex in WidgetStyle.terminal.backdrop {
             let backdrop = RGBAColor(hex: hex)
-            XCTAssertGreaterThan(shown(theme.color(for: 1), over: backdrop).contrast(with: backdrop), 3)
+            let empty = shown(theme.color(for: 0), over: backdrop)
+            let quiet = shown(theme.color(for: 1), over: backdrop)
+            XCTAssertGreaterThan(difference(empty, quiet), 0.15)
+            XCTAssertLessThan(empty.contrast(with: backdrop), 1.2, "an empty day stays in the background")
+            XCTAssertGreaterThan(quiet.contrast(with: backdrop), 1.9)
         }
         XCTAssertFalse(theme.monochrome.outlinesEmpty, "a tinted home screen keeps its stepped fills")
     }
 
-    func testTerminalGreensClimbInEvenSteps() {
+    func testTerminalGreensClimbSteadily() {
         let backdrop = RGBAColor(hex: 0x0C1A10)
         let levels = WidgetStyle.terminal.theme(for: .dark).levels.dropFirst().map { shown($0, over: backdrop) }
         let steps = zip(levels, levels.dropFirst()).map { difference($0, $1) }
         XCTAssertEqual(steps.count, 3)
-        XCTAssertLessThan(steps.max()! - steps.min()!, 0.03, "steps of \(steps)")
+        XCTAssertGreaterThan(steps.min()!, 0.12, "steps of \(steps)")
+        XCTAssertLessThan(steps.max()! - steps.min()!, 0.07, "no step dwarfs the others: \(steps)")
     }
 
     // MARK: - Per-widget choices

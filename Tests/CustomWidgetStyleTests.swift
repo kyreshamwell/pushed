@@ -207,7 +207,8 @@ final class CustomWidgetStyleTests: XCTestCase {
 
     func testNotYetIsARingSinceTheSquareColorCouldBeAnything() {
         XCTAssertTrue(CustomWidgetStyle.default.theme.ringsPending)
-        XCTAssertFalse(WidgetStyle.ember.theme(for: .dark).ringsPending, "built-in styles keep their two colors")
+        // Since 1.3 every look empties its dot to a ring while today is owed.
+        XCTAssertTrue(WidgetStyle.ember.theme(for: .dark).ringsPending, "built-in styles ring it too")
     }
 
     func testChoicesMapToTheirShapeAndType() {

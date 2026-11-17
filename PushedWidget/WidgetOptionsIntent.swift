@@ -73,6 +73,7 @@ extension WidgetStyle: AppEnum {
         .ember: "Ember",
         .terminal: "Terminal",
         .paper: "Paper",
+        .marks: "Marks",
         .custom: "Custom",
         .rotation: "Daily Rotation",
     ]

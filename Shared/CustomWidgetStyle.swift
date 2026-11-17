@@ -67,13 +67,17 @@ struct CustomWidgetStyle: Codable, Equatable, Sendable {
 // MARK: - Choices
 
 enum CellShapeChoice: String, Codable, CaseIterable, Identifiable, Sendable {
-    case square, rounded, dot, diamond, hexagon, heart, star
+    case square
+    /// GitHub's near-square corners, as Classic and Marks draw them.
+    case soft
+    case rounded, dot, diamond, hexagon, heart, star
 
     var id: String { rawValue }
 
     var name: String {
         switch self {
         case .square: "Square"
+        case .soft: "Soft square"
         case .rounded: "Rounded"
         case .dot: "Dot"
         case .diamond: "Diamond"
@@ -87,14 +91,21 @@ enum CellShapeChoice: String, Codable, CaseIterable, Identifiable, Sendable {
     var cornerFraction: CGFloat {
         switch self {
         case .square: 0
+        case .soft: 0.18
         case .dot: 0.5
         default: 0.28
         }
     }
 
+    /// The smallest corner radius in points, so a soft square still looks
+    /// soft when the cells are tiny.
+    var minimumCorner: CGFloat {
+        self == .soft ? 2 : 0
+    }
+
     var form: CellForm {
         switch self {
-        case .square, .rounded, .dot: .box
+        case .square, .soft, .rounded, .dot: .box
         case .diamond: .diamond
         case .hexagon: .hexagon
         case .heart: .heart
@@ -248,11 +259,9 @@ extension CustomWidgetStyle {
             pushed: accent,
             pending: ink.opacity(0.7),
             cornerFraction: shape.cornerFraction,
+            minimumCorner: shape.minimumCorner,
             glows: glows,
             fontDesign: font.design,
-            // The square color could be anything, orange included, so "not
-            // yet" is a ring instead of a color that might match it.
-            ringsPending: true,
             spacing: spacing.scale,
             hidesText: minimal,
             form: shape.form,

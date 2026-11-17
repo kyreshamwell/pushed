@@ -4,9 +4,13 @@ import WidgetKit
 
 /// A complete look for the widget: palette, backdrop, cell shape and type.
 /// Picked per widget from Edit Widget, so two widgets can wear different
-/// styles side by side.
+/// styles side by side. Every look shares one layout, so switching between
+/// them changes color, shape and type and never moves anything.
 enum WidgetStyle: String, CaseIterable, Codable, Identifiable, Sendable {
     case classic, aurora, ember, terminal, paper
+    /// One solid color with a symbol for every day: a dot when pushed, ×
+    /// when missed, F for a freeze and R for a rest day.
+    case marks
     /// Designed in the app. See `CustomWidgetStyle` and `StyleLibrary`.
     case custom
     /// Not a look of its own: a different saved style each day. It's only
@@ -17,7 +21,7 @@ enum WidgetStyle: String, CaseIterable, Codable, Identifiable, Sendable {
     var id: String { rawValue }
 
     /// The styles that ship with the app.
-    static let builtIn: [WidgetStyle] = [.classic, .aurora, .ember, .terminal, .paper]
+    static let builtIn: [WidgetStyle] = [.classic, .aurora, .ember, .terminal, .paper, .marks]
     /// Every style that can actually be drawn.
     static let designs: [WidgetStyle] = builtIn + [.custom]
 
@@ -28,6 +32,7 @@ enum WidgetStyle: String, CaseIterable, Codable, Identifiable, Sendable {
         case .ember: "Ember"
         case .terminal: "Terminal"
         case .paper: "Paper"
+        case .marks: "Marks"
         case .custom: "Custom"
         case .rotation: "Daily Rotation"
         }
@@ -35,11 +40,12 @@ enum WidgetStyle: String, CaseIterable, Codable, Identifiable, Sendable {
 
     var tagline: String {
         switch self {
-        case .classic: "GitHub's own greens. Follows light and dark mode."
-        case .aurora: "Frosted squares over a teal and violet glow."
-        case .ember: "Busy days burn hotter. Keep the fire going."
-        case .terminal: "Phosphor green on black, set in monospace."
-        case .paper: "Ink dots on warm paper. Calm and bright."
+        case .classic: "GitHub's own graph and greens. Follows light and dark mode."
+        case .aurora: "Deep navy with teal and violet light. Busy days glow."
+        case .ember: "Warm black, coal to flame. Busy days glow like embers."
+        case .terminal: "Phosphor green in monospace, with faint scanlines."
+        case .paper: "Ink dots on warm paper, with a serif number."
+        case .marks: "One color and a symbol for every day."
         case .custom: "Your colors, shape and type."
         case .rotation: "One of your styles, a different one each day."
         }
@@ -52,7 +58,7 @@ enum WidgetStyle: String, CaseIterable, Codable, Identifiable, Sendable {
         switch self {
         case .classic, .rotation: nil
         case .paper: .light
-        case .aurora, .ember, .terminal: .dark
+        case .aurora, .ember, .terminal, .marks: .dark
         case .custom: custom.colorScheme
         }
     }
@@ -60,7 +66,7 @@ enum WidgetStyle: String, CaseIterable, Codable, Identifiable, Sendable {
 
 /// What the widget leads with.
 enum WidgetLayout: String, CaseIterable, Identifiable, Sendable {
-    /// The contribution graph, with the streak in a footer.
+    /// The contribution graph filling the widget, under a slim header.
     case graph
     /// The streak number, big, with a smaller graph alongside.
     case streak
@@ -121,27 +127,53 @@ enum WidgetStat: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// How each day is drawn.
+enum CellMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    /// A square shaded by how busy the day was.
+    case squares
+    /// A symbol for what happened: a dot when pushed (brighter when busier),
+    /// × for a missed day, F for a freeze and R for a rest day.
+    case marks
+
+    var id: String { rawValue }
+
+    var name: String {
+        switch self {
+        case .squares: "Squares"
+        case .marks: "Marks"
+        }
+    }
+}
+
 /// The resolved colors and shapes a style draws with.
 struct WidgetTheme {
-    /// Level 0 (no contributions) through 4.
-    let levels: [Color]
-    let primaryText: Color
-    let secondaryText: Color
-    let numberFill: AnyShapeStyle
-    /// Status dot once you've pushed today, and while you haven't yet.
-    let pushed: Color
-    let pending: Color
+    /// Level 0 (no contributions) through 4. In Marks, level 0 is the cell
+    /// behind each symbol and the others are the dot at each level.
+    var levels: [Color]
+    var primaryText: Color
+    var secondaryText: Color
+    var numberFill: AnyShapeStyle
+    /// The look's accent: it fills the check circle and the status dot once
+    /// you've pushed today.
+    var pushed: Color
+    /// The empty ring they turn into while today's push is still owed.
+    var pending: Color
     /// Corner radius as a fraction of the cell: 0 is a square, 0.5 a dot.
-    let cornerFraction: CGFloat
-    /// A soft halo around the busiest cells and the streak number.
-    let glows: Bool
-    let fontDesign: Font.Design
+    var cornerFraction: CGFloat
+    /// The smallest corner radius, in points, so tiny cells still read as
+    /// softened rather than sharp.
+    var minimumCorner: CGFloat = 0
+    /// A soft halo around the busiest days.
+    var glows: Bool
+    var fontDesign: Font.Design
+    /// The streak number's typeface when it differs from the rest, like
+    /// Paper's serif. Nil uses `fontDesign`.
+    var numberDesign: Font.Design? = nil
     var isMonochrome = false
-    /// Draw "not pushed yet" as a hollow ring rather than a second color, for
-    /// themes where no second color is guaranteed to stand apart.
-    var ringsPending = false
-    /// Draw empty days as a hollow outline instead of a filled square, for
-    /// themes where a filled one would pass for a faint active day.
+    /// "Not pushed yet" is an empty ring in every look: the dot or circle
+    /// empties and nothing else moves.
+    var ringsPending = true
+    /// Draw empty days as a hollow outline instead of a filled square.
     var outlinesEmpty = false
     /// How far apart the squares sit, as a multiple of the usual gap.
     var spacing: CGFloat = 1
@@ -155,6 +187,9 @@ struct WidgetTheme {
     var freeze = Color(hex: 0x7DD3FC)
     /// The day a streak ended on. Nil draws it like any other empty day.
     var missed: Color? = nil
+    var cellMode: CellMode = .squares
+    /// The one color Marks draws its symbols in. Nil uses the text color.
+    var ink: Color? = nil
 
     func color(for level: Int) -> Color {
         levels[min(max(level, 0), levels.count - 1)]
@@ -165,22 +200,39 @@ struct WidgetTheme {
     /// being as loud as a day that was pushed.
     var dayOff: Color { color(for: 2) }
 
+    /// The thin ring around today's square.
+    var todayRing: Color { primaryText }
+
+    /// What the symbols in Marks are drawn in.
+    var markInk: Color { ink ?? primaryText }
+
+    /// The halo around the busiest days, in the busiest level's color.
+    var glowColor: Color? { glows ? color(for: 4) : nil }
+
+    var numberFontDesign: Font.Design { numberDesign ?? fontDesign }
+
+    /// The corner radius of a cell this size, in points.
+    func cornerRadius(for side: CGFloat) -> CGFloat {
+        CellShape.radius(side: side, cornerFraction: cornerFraction, minimumCorner: minimumCorner)
+    }
+
     /// Tinted and clear home screens drop the backdrop and repaint every pixel
     /// in a single tint, keeping only its alpha, so hue can't tell the levels
     /// apart there. White at stepped opacity still can. Shape and type stay.
     var monochrome: WidgetTheme {
-        WidgetTheme(
+        var theme = WidgetTheme(
             levels: [0.18, 0.4, 0.62, 0.82, 1].map { Color.white.opacity($0) },
             primaryText: .primary,
             secondaryText: .secondary,
             numberFill: AnyShapeStyle(Color.primary),
             pushed: .primary,
-            pending: .primary,
+            pending: .secondary,
             cornerFraction: cornerFraction,
+            minimumCorner: minimumCorner,
             glows: false,
             fontDesign: fontDesign,
+            numberDesign: numberDesign,
             isMonochrome: true,
-            ringsPending: true,
             spacing: spacing,
             hidesText: hidesText,
             form: form,
@@ -188,9 +240,25 @@ struct WidgetTheme {
             numberWeight: numberWeight,
             // One tint is all there is here, so a freeze is told apart by
             // nothing but its mark.
-            freeze: Color.white.opacity(0.62)
+            freeze: Color.white.opacity(0.62),
+            cellMode: cellMode,
+            ink: .white
         )
+        if cellMode == .marks {
+            // The cell behind a symbol stays a whisper, as in full color.
+            theme.levels[0] = Color.white.opacity(0.1)
+        }
+        return theme
     }
+}
+
+/// How bright each of the Marks symbols is, as a share of the ink.
+enum MarkOpacity {
+    /// A pushed day's dot, by level: brighter when busier.
+    static let dot: [Double] = [0, 0.55, 0.72, 0.86, 1]
+    static let freeze = 0.6
+    static let rest = 0.38
+    static let missed = 0.32
 }
 
 extension WidgetStyle {
@@ -208,169 +276,177 @@ extension WidgetStyle {
         // Rotation is resolved to a real style long before this. Should it
         // ever arrive here it draws as Classic, not as a blank widget.
         case .classic, .rotation:
-            WidgetTheme(
-                levels: colorScheme == .dark ? Self.classicDark : Self.classicLight,
-                primaryText: .primary,
-                secondaryText: .secondary,
-                numberFill: AnyShapeStyle(Color.primary),
-                pushed: .green,
-                pending: .orange,
-                cornerFraction: 0.25,
-                glows: false,
-                fontDesign: .default,
-                freeze: Color(hex: colorScheme == .dark ? 0x7DD3FC : 0x0284C7)
-            )
+            colorScheme == .dark ? Self.classicDark : Self.classicLight
         case .aurora:
             WidgetTheme(
-                levels: [0.16, 0.38, 0.6, 0.82, 1].map { Color.white.opacity($0) },
-                primaryText: .white,
-                secondaryText: .white.opacity(0.75),
-                numberFill: AnyShapeStyle(Color.white),
-                pushed: Color(hex: 0x6EE7B7),
-                pending: Color(hex: 0xFDBA74),
-                cornerFraction: 0.3,
-                glows: false,
-                fontDesign: .rounded
+                levels: [Color.white.opacity(0.08)] + [0x1C4E63, 0x2A8C93, 0x6EE7D8, 0xE4D7FF].map { Color(hex: $0) },
+                primaryText: Color(hex: 0xF2F5FF),
+                secondaryText: Color(hex: 0xE2E8FF, opacity: 0.66),
+                numberFill: AnyShapeStyle(LinearGradient(
+                    colors: [Color(hex: 0xA7F3E8), Color(hex: 0xE4D7FF)],
+                    startPoint: UnitPoint(x: 0, y: 0.1), endPoint: UnitPoint(x: 1, y: 0.9)
+                )),
+                pushed: Color(hex: 0x6EE7D8),
+                pending: Color(hex: 0xE2E8FF, opacity: 0.66),
+                cornerFraction: CellShapeChoice.rounded.cornerFraction,
+                glows: true,
+                fontDesign: .default
             )
         case .ember:
             WidgetTheme(
-                levels: [0x3A2A24, 0x7C2D12, 0xC2410C, 0xF97316, 0xFACC15].map { Color(hex: $0) },
-                primaryText: Color(hex: 0xFFF7ED),
-                secondaryText: Color(hex: 0xFDBA74, opacity: 0.8),
+                levels: [0x2A1A14, 0x6B2410, 0xB8400E, 0xF2761B, 0xFFC46B].map { Color(hex: $0) },
+                primaryText: Color(hex: 0xFFF4E8),
+                secondaryText: Color(hex: 0xFDC896, opacity: 0.72),
+                // Top to bottom across the digits themselves, not the taller
+                // box SwiftUI sets text in, so they run from pale gold to flame.
                 numberFill: AnyShapeStyle(LinearGradient(
-                    colors: [Color(hex: 0xFDE68A), Color(hex: 0xF97316)],
-                    startPoint: .top, endPoint: .bottom
+                    colors: [Color(hex: 0xFFE1A6), Color(hex: 0xF2761B)],
+                    startPoint: UnitPoint(x: 0.5, y: 0.12), endPoint: UnitPoint(x: 0.5, y: 0.89)
                 )),
-                // Hot once you've pushed, cooled to ash while you haven't.
-                pushed: Color(hex: 0xFACC15),
-                pending: Color(hex: 0xA8A29E),
-                cornerFraction: 0.25,
+                pushed: Color(hex: 0xF2761B),
+                pending: Color(hex: 0xFDC896, opacity: 0.72),
+                cornerFraction: CellShapeChoice.rounded.cornerFraction,
                 glows: true,
                 fontDesign: .default
             )
         case .terminal:
             WidgetTheme(
-                // The greens climb in even steps from a first level that's
-                // plainly lit. Empty days are drawn hollow (see below), so
-                // level 0 here is the color of that outline.
-                levels: [0x334937, 0x0E8C41, 0x1CB657, 0x3CE074, 0x9CFFB0].map { Color(hex: $0) },
-                primaryText: Color(hex: 0x8CFCA6),
-                secondaryText: Color(hex: 0x4FA968),
-                numberFill: AnyShapeStyle(Color(hex: 0x8CFCA6)),
-                pushed: Color(hex: 0x8CFCA6),
-                pending: Color(hex: 0xF5C542),
+                levels: [0x0E1A12, 0x14532D, 0x15803D, 0x22C55E, 0x86EFAC].map { Color(hex: $0) },
+                primaryText: Color(hex: 0x86EFAC),
+                secondaryText: Color(hex: 0x4E8F62),
+                numberFill: AnyShapeStyle(Color(hex: 0x86EFAC)),
+                pushed: Color(hex: 0x22C55E),
+                pending: Color(hex: 0x4E8F62),
                 cornerFraction: 0,
-                glows: true,
-                fontDesign: .monospaced,
-                // On a black screen a filled dark green square and a dim
-                // green one are hard to tell apart, which left it unclear
-                // whether a day had anything on it. Hollow against filled is
-                // a difference in shape, not in shade.
-                outlinesEmpty: true
+                glows: false,
+                fontDesign: .monospaced
             )
         case .paper:
             WidgetTheme(
-                levels: [0.08, 0.3, 0.52, 0.76, 1].map { Color(hex: 0x292524, opacity: $0) },
-                primaryText: Color(hex: 0x1C1917),
-                secondaryText: Color(hex: 0x78716C),
-                numberFill: AnyShapeStyle(Color(hex: 0x1C1917)),
-                pushed: Color(hex: 0x3F7D58),
-                pending: Color(hex: 0xC2552D),
+                levels: [0xE2DACB, 0xC9BBA2, 0x9A8970, 0x5E5243, 0x24211D].map { Color(hex: $0) },
+                primaryText: Color(hex: 0x24211D),
+                secondaryText: Color(hex: 0x6E6456),
+                numberFill: AnyShapeStyle(Color(hex: 0x24211D)),
+                pushed: Color(hex: 0x24211D),
+                pending: Color(hex: 0x6E6456),
                 cornerFraction: 0.5,
                 glows: false,
-                fontDesign: .serif,
+                fontDesign: .default,
+                numberDesign: .serif,
                 freeze: Color(hex: 0x0284C7)
             )
+        case .marks:
+            Self.marksTheme
         case .custom:
             custom.theme
         }
     }
 
-    private static let classicLight: [Color] = [
-        Color(red: 0.922, green: 0.930, blue: 0.941), // #ebedf0
-        Color(red: 0.608, green: 0.914, blue: 0.659), // #9be9a8
-        Color(red: 0.251, green: 0.769, blue: 0.388), // #40c463
-        Color(red: 0.188, green: 0.631, blue: 0.306), // #30a14e
-        Color(red: 0.129, green: 0.431, blue: 0.224), // #216e39
-    ]
+    /// GitHub's own dark graph, on GitHub's own #0D1117.
+    private static let classicDark = WidgetTheme(
+        levels: [0x161B22, 0x0E4429, 0x006D32, 0x26A641, 0x39D353].map { Color(hex: $0) },
+        primaryText: Color(hex: 0xE6EDF3),
+        secondaryText: Color(hex: 0x8B949E),
+        numberFill: AnyShapeStyle(Color(hex: 0xE6EDF3)),
+        pushed: Color(hex: 0x39D353),
+        pending: Color(hex: 0x8B949E),
+        cornerFraction: CellShapeChoice.soft.cornerFraction,
+        minimumCorner: CellShapeChoice.soft.minimumCorner,
+        glows: false,
+        fontDesign: .default
+    )
 
-    // Level 0 is lifted from GitHub's #161b22: that shade is darker than the
-    // iOS dark-mode widget background, so empty days vanished into the platter.
-    private static let classicDark: [Color] = [
-        Color(red: 0.184, green: 0.212, blue: 0.247), // #2f3640-ish, visible on dark platters
-        Color(red: 0.055, green: 0.267, blue: 0.161), // #0e4429
-        Color(red: 0.000, green: 0.427, blue: 0.196), // #006d32
-        Color(red: 0.149, green: 0.651, blue: 0.255), // #26a641
-        Color(red: 0.224, green: 0.827, blue: 0.325), // #39d353
-    ]
+    /// GitHub's light greens, on white.
+    private static let classicLight = WidgetTheme(
+        levels: [0xEBEDF0, 0x9BE9A8, 0x40C463, 0x30A14E, 0x216E39].map { Color(hex: $0) },
+        primaryText: Color(hex: 0x1F2328),
+        secondaryText: Color(hex: 0x59636E),
+        numberFill: AnyShapeStyle(Color(hex: 0x1F2328)),
+        pushed: Color(hex: 0x216E39),
+        pending: Color(hex: 0x59636E),
+        cornerFraction: CellShapeChoice.soft.cornerFraction,
+        minimumCorner: CellShapeChoice.soft.minimumCorner,
+        glows: false,
+        fontDesign: .default,
+        freeze: Color(hex: 0x0284C7)
+    )
+
+    private static let marksInk = Color(hex: 0xF2F2F2)
+
+    /// One solid ink on near black. The levels are the pushed-day dot at
+    /// each brightness; level 0 is the faint cell behind every symbol.
+    private static let marksTheme = WidgetTheme(
+        levels: [Color.white.opacity(0.045)] + MarkOpacity.dot.dropFirst().map { marksInk.opacity($0) },
+        primaryText: marksInk,
+        secondaryText: Color(hex: 0x8E8E93),
+        numberFill: AnyShapeStyle(marksInk),
+        pushed: marksInk,
+        pending: Color(hex: 0x8E8E93),
+        cornerFraction: CellShapeChoice.soft.cornerFraction,
+        minimumCorner: CellShapeChoice.soft.minimumCorner,
+        glows: false,
+        fontDesign: .default,
+        freeze: Color(hex: 0xAEAEB2),
+        cellMode: .marks,
+        ink: marksInk
+    )
 }
 
 extension WidgetStyle {
-    /// The two colors a painted backdrop runs between. Classic sits on the
-    /// system's widget background and Custom on whatever was picked, so
-    /// neither has any of its own.
+    /// The solid colors a style's squares sit on, used to check every level
+    /// stands apart from them. Classic's ground follows light and dark mode
+    /// (#0D1117 or white) and Custom's is whatever was picked, so neither is
+    /// listed here.
     var backdrop: [UInt32] {
         switch self {
         case .classic, .custom, .rotation: []
-        case .aurora: [0x1E1B4B, 0x4C1D95]
-        case .ember: [0x1A0F0B, 0x2B120A]
-        case .terminal: [0x0C1A10, 0x030604]
-        case .paper: [0xF8F4EC, 0xEEE6D6]
+        case .aurora: [0x0A0F24]
+        case .ember: [0x140B08]
+        case .terminal: [0x0B1A10, 0x030604]
+        case .paper: [0xF7F2E8, 0xEDE5D6]
+        case .marks: [0x111113]
         }
     }
-
-    fileprivate var backdropColors: [Color] { backdrop.map { Color(hex: $0) } }
 }
 
-/// A style's backdrop. In the widget itself Classic is left to the system's
-/// own background; this view stands in for it inside the app.
+/// A style's backdrop: what the widget paints behind everything, and what
+/// stands in for it inside the app.
 struct WidgetBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
     let style: WidgetStyle
     var custom: CustomWidgetStyle = .default
 
     var body: some View {
         switch style {
         case .classic, .rotation:
-            Color(uiColor: .secondarySystemGroupedBackground)
+            Color(hex: colorScheme == .dark ? 0x0D1117 : 0xFFFFFF)
         case .aurora:
             ZStack {
-                LinearGradient(
-                    colors: style.backdropColors,
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                )
-                EllipticalGradient(
-                    colors: [Color(hex: 0x14B8A6, opacity: 0.8), .clear],
-                    center: .topLeading, endRadiusFraction: 0.9
-                )
-                EllipticalGradient(
-                    colors: [Color(hex: 0xEC4899, opacity: 0.6), .clear],
-                    center: .bottomTrailing, endRadiusFraction: 0.8
-                )
+                Color(hex: 0x0A0F24)
+                EllipseGlow(color: Color(hex: 0x2DD4BF), opacity: 0.30, center: .topLeading, radii: CGSize(width: 0.9, height: 1.2), fade: 0.55)
+                EllipseGlow(color: Color(hex: 0xA78BFA), opacity: 0.34, center: .bottomTrailing, radii: CGSize(width: 0.9, height: 1.2), fade: 0.6)
             }
         case .ember:
             ZStack {
-                LinearGradient(
-                    colors: style.backdropColors,
-                    startPoint: .top, endPoint: .bottom
-                )
-                EllipticalGradient(
-                    colors: [Color(hex: 0xC2410C, opacity: 0.4), .clear],
-                    center: .bottom, endRadiusFraction: 0.75
-                )
+                Color(hex: 0x140B08)
+                EllipseGlow(color: Color(hex: 0xEA580C), opacity: 0.28, center: .topTrailing, radii: CGSize(width: 0.8, height: 0.9), fade: 0.6)
+                EllipseGlow(color: Color(hex: 0xFACC15), opacity: 0.08, center: .bottomLeading, radii: CGSize(width: 0.7, height: 0.7), fade: 0.6)
             }
         case .terminal:
             ZStack {
-                EllipticalGradient(
-                    colors: style.backdropColors,
-                    center: .center, endRadiusFraction: 0.75
+                EllipseGlow(
+                    stops: [.init(color: Color(hex: 0x0B1A10), location: 0), .init(color: Color(hex: 0x030604), location: 1)],
+                    center: UnitPoint(x: 0.5, y: 0.4), radii: CGSize(width: 0.9, height: 0.9)
                 )
                 Scanlines()
             }
         case .paper:
             LinearGradient(
-                colors: style.backdropColors,
+                colors: [Color(hex: 0xF7F2E8), Color(hex: 0xEDE5D6)],
                 startPoint: .top, endPoint: .bottom
             )
+        case .marks:
+            Color(hex: 0x111113)
         case .custom:
             if custom.usesGradient {
                 LinearGradient(
@@ -384,16 +460,60 @@ struct WidgetBackground: View {
     }
 }
 
+/// An elliptical radial gradient sized like CSS's `radial-gradient(90% 120%
+/// at 0% 0%, ...)`: its radii are fractions of the width and the height,
+/// which SwiftUI's own elliptical gradient can't set independently. Past
+/// the ellipse the last stop carries on.
+private struct EllipseGlow: View {
+    var stops: [Gradient.Stop]
+    var center: UnitPoint
+    /// Horizontal and vertical radius, as fractions of the width and height.
+    var radii: CGSize
+
+    init(stops: [Gradient.Stop], center: UnitPoint, radii: CGSize) {
+        self.stops = stops
+        self.center = center
+        self.radii = radii
+    }
+
+    /// A color fading out to nothing at `fade` of the way to the edge.
+    init(color: Color, opacity: Double, center: UnitPoint, radii: CGSize, fade: CGFloat) {
+        self.init(
+            stops: [.init(color: color.opacity(opacity), location: 0), .init(color: color.opacity(0), location: fade)],
+            center: center,
+            radii: radii
+        )
+    }
+
+    var body: some View {
+        Canvas { context, size in
+            let rx = max(radii.width * size.width, 1)
+            let ry = max(radii.height * size.height, 1)
+            let origin = CGPoint(x: center.x * size.width, y: center.y * size.height)
+            // Squash a circle into the ellipse, then cover the whole view.
+            context.translateBy(x: origin.x, y: origin.y)
+            context.scaleBy(x: 1, y: ry / rx)
+            let cover = CGRect(
+                x: -origin.x, y: -origin.y * rx / ry,
+                width: size.width, height: size.height * rx / ry
+            )
+            context.fill(
+                Path(cover),
+                with: .radialGradient(Gradient(stops: stops), center: .zero, startRadius: 0, endRadius: rx)
+            )
+        }
+    }
+}
+
 /// Faint horizontal lines, like an old CRT.
 private struct Scanlines: View {
     var body: some View {
         Canvas { context, size in
+            var lines = Path()
             for y in stride(from: 0, to: size.height, by: 3) {
-                context.fill(
-                    Path(CGRect(x: 0, y: y, width: size.width, height: 1)),
-                    with: .color(.white.opacity(0.025))
-                )
+                lines.addRect(CGRect(x: 0, y: y, width: size.width, height: 1))
             }
+            context.fill(lines, with: .color(.white.opacity(0.03)))
         }
     }
 }

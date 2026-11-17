@@ -31,7 +31,7 @@ struct PushedWidget: Widget {
                 .modifier(StyleContainerBackground(style: entry.style, custom: entry.custom))
         }
         .configurationDisplayName("Contribution Graph")
-        .description("Your GitHub contribution graph and commit streak, in five styles, your own designs, or a different one each day.")
+        .description("Your GitHub contribution graph and commit streak, in six styles, your own designs, or a different one each day.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         // PushedWidgetView applies the standard margins itself, trimmed for
         // the graph layout so the squares can run closer to the edges.
@@ -39,18 +39,14 @@ struct PushedWidget: Widget {
     }
 }
 
-/// Classic keeps the system's own widget background, which follows light and
-/// dark mode. Every other style paints its own backdrop.
+/// Every style paints its own backdrop. Classic's follows light and dark
+/// mode: GitHub's #0D1117 in the dark and white in the light.
 private struct StyleContainerBackground: ViewModifier {
     let style: WidgetStyle
     let custom: CustomWidgetStyle
 
     func body(content: Content) -> some View {
-        if style == .classic {
-            content.containerBackground(.background, for: .widget)
-        } else {
-            content.containerBackground(for: .widget) { WidgetBackground(style: style, custom: custom) }
-        }
+        content.containerBackground(for: .widget) { WidgetBackground(style: style, custom: custom) }
     }
 }
 
@@ -97,6 +93,13 @@ struct PushedWidgetBundle: WidgetBundle {
 } timeline: {
     StreakEntry(date: .now, snapshot: .sample(), style: .paper, layout: .graph)
     StreakEntry(date: .now, snapshot: .sample(), style: .paper, layout: .streak)
+}
+
+#Preview("Marks", as: .systemMedium) {
+    PushedWidget()
+} timeline: {
+    StreakEntry(date: .now, snapshot: .sample(), style: .marks, layout: .graph)
+    StreakEntry(date: .now, snapshot: .sample(), style: .marks, layout: .streak)
 }
 
 #Preview("Custom", as: .systemMedium) {

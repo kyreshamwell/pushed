@@ -270,28 +270,39 @@ enum CellForm: String, Sendable {
 /// inner edge cuts the hole, and the dot fills back in.
 struct CellOutline: Shape {
     var cornerFraction: CGFloat
+    var minimumCorner: CGFloat = 0
     var form: CellForm = .box
     var dotted = false
     /// Line width as a share of the cell.
     var thickness: CGFloat = 0.11
 
-    init(cornerFraction: CGFloat, form: CellForm = .box, dotted: Bool = false, thickness: CGFloat = 0.11) {
+    init(
+        cornerFraction: CGFloat, minimumCorner: CGFloat = 0, form: CellForm = .box,
+        dotted: Bool = false, thickness: CGFloat = 0.11
+    ) {
         self.cornerFraction = cornerFraction
+        self.minimumCorner = minimumCorner
         self.form = form
         self.dotted = dotted
         self.thickness = thickness
     }
 
     init(_ theme: WidgetTheme, dotted: Bool = false, thickness: CGFloat = 0.11) {
-        self.init(cornerFraction: theme.cornerFraction, form: theme.form, dotted: dotted, thickness: thickness)
+        self.init(
+            cornerFraction: theme.cornerFraction, minimumCorner: theme.minimumCorner, form: theme.form,
+            dotted: dotted, thickness: thickness
+        )
     }
 
     func path(in rect: CGRect) -> Path {
         let side = min(rect.width, rect.height)
         let line = max(side * thickness, 0.6)
 
-        var path = CellShape.path(form, cornerFraction: cornerFraction, in: rect)
-        path.addPath(CellShape.path(form, cornerFraction: cornerFraction, in: rect.insetBy(dx: line, dy: line)))
+        var path = CellShape.path(form, cornerFraction: cornerFraction, minimumCorner: minimumCorner, in: rect)
+        path.addPath(CellShape.path(
+            form, cornerFraction: cornerFraction, minimumCorner: max(minimumCorner - line, 0),
+            in: rect.insetBy(dx: line, dy: line)
+        ))
         if dotted {
             path.addPath(CenterDot(fraction: 0.28).path(in: rect))
         }
@@ -333,20 +344,31 @@ struct Stripes: Shape {
 /// reads the same at a year's worth of tiny squares or a week of big ones.
 struct CellShape: InsettableShape {
     var cornerFraction: CGFloat
+    var minimumCorner: CGFloat = 0
     var form: CellForm = .box
     var insetAmount: CGFloat = 0
 
-    init(cornerFraction: CGFloat, form: CellForm = .box) {
+    init(cornerFraction: CGFloat, minimumCorner: CGFloat = 0, form: CellForm = .box) {
         self.cornerFraction = cornerFraction
+        self.minimumCorner = minimumCorner
         self.form = form
     }
 
     init(_ theme: WidgetTheme) {
-        self.init(cornerFraction: theme.cornerFraction, form: theme.form)
+        self.init(cornerFraction: theme.cornerFraction, minimumCorner: theme.minimumCorner, form: theme.form)
     }
 
     func path(in rect: CGRect) -> Path {
-        Self.path(form, cornerFraction: cornerFraction, in: rect.insetBy(dx: insetAmount, dy: insetAmount))
+        Self.path(
+            form, cornerFraction: cornerFraction, minimumCorner: minimumCorner,
+            in: rect.insetBy(dx: insetAmount, dy: insetAmount)
+        )
+    }
+
+    /// A box's corner radius at this size: the fraction of its side, but
+    /// never under the minimum or past round.
+    static func radius(side: CGFloat, cornerFraction: CGFloat, minimumCorner: CGFloat = 0) -> CGFloat {
+        min(side / 2, max(minimumCorner, side * cornerFraction))
     }
 
     func inset(by amount: CGFloat) -> CellShape {
@@ -355,7 +377,7 @@ struct CellShape: InsettableShape {
         return shape
     }
 
-    static func path(_ form: CellForm, cornerFraction: CGFloat, in rect: CGRect) -> Path {
+    static func path(_ form: CellForm, cornerFraction: CGFloat, minimumCorner: CGFloat = 0, in rect: CGRect) -> Path {
         let side = min(rect.width, rect.height)
         let box = CGRect(x: rect.midX - side / 2, y: rect.midY - side / 2, width: side, height: side)
         func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
@@ -370,7 +392,12 @@ struct CellShape: InsettableShape {
 
         switch form {
         case .box:
-            return Path(roundedRect: rect, cornerRadius: side * cornerFraction)
+            let radius = radius(side: side, cornerFraction: cornerFraction, minimumCorner: minimumCorner)
+            // All the way round is a true circle, not a squircle.
+            if radius >= side / 2 && rect.width == rect.height {
+                return Path(ellipseIn: rect)
+            }
+            return Path(roundedRect: rect, cornerRadius: radius)
         case .diamond:
             return polygon([point(0.5, 0), point(1, 0.5), point(0.5, 1), point(0, 0.5)])
         case .hexagon:
