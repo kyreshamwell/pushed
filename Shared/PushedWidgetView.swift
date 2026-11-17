@@ -3,7 +3,7 @@ import WidgetKit
 
 /// Everything the home-screen widget draws. It lives in Shared rather than the
 /// extension so the app's style gallery renders the exact same view.
-struct StreakWidgetView: View {
+struct PushedWidgetView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.widgetRenderingMode) private var renderingMode
 
@@ -575,7 +575,7 @@ struct WidgetPreviewCard: View {
 
     var body: some View {
         let size = Self.size(for: family)
-        StreakWidgetView(
+        PushedWidgetView(
             snapshot: snapshot,
             family: family,
             style: style,

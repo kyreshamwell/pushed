@@ -7,7 +7,7 @@ struct PushedWidgetEntryView: View {
     let entry: StreakEntry
 
     var body: some View {
-        StreakWidgetView(
+        PushedWidgetView(
             snapshot: entry.snapshot,
             family: family,
             style: entry.style,
@@ -33,7 +33,7 @@ struct PushedWidget: Widget {
         .configurationDisplayName("Contribution Graph")
         .description("Your GitHub contribution graph and commit streak, in five styles, your own designs, or a different one each day.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-        // StreakWidgetView applies the standard margins itself, trimmed for
+        // PushedWidgetView applies the standard margins itself, trimmed for
         // the graph layout so the squares can run closer to the edges.
         .contentMarginsDisabled()
     }

@@ -6,7 +6,7 @@ An iPhone home-screen widget that shows your current GitHub commit streak, so th
 
 - `Pushed/`: the container app. Setup (GitHub username and personal access token), then your graph, stats, reminders and widget settings.
 - `PushedWidget/`: the WidgetKit extension. Small, medium and large sizes, plus the Edit Widget options (`WidgetOptionsIntent.swift`).
-- `Shared/`: code used by both. Keychain storage for the token, the GitHub GraphQL fetch, streak calculation, the snapshot cache that lets the widget render instantly from the last known data, and the widget's views and styles (`StreakWidgetView.swift`, `WidgetStyle.swift`), which live here so the app's style gallery draws the exact same thing.
+- `Shared/`: code used by both. Keychain storage for the token, the GitHub GraphQL fetch, streak calculation, the snapshot cache that lets the widget render instantly from the last known data, and the widget's views and styles (`PushedWidgetView.swift`, `WidgetStyle.swift`), which live here so the app's style gallery draws the exact same thing.
 
 ## Widget styles
 
