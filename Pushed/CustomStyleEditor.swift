@@ -150,7 +150,6 @@ struct CustomStyleEditor: View {
                     family: previewFamily,
                     style: .custom,
                     layout: previewLayout,
-                    weeks: weeks,
                     icon: icon,
                     custom: saved.style
                 )

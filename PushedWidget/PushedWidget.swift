@@ -12,7 +12,6 @@ struct PushedWidgetEntryView: View {
             family: family,
             style: entry.style,
             layout: entry.layout,
-            weeks: entry.weeks,
             stat: entry.stat,
             custom: entry.custom,
             protection: entry.protection,
@@ -33,8 +32,8 @@ struct PushedWidget: Widget {
         .configurationDisplayName("Contribution Graph")
         .description("Your GitHub contribution graph and commit streak, in six styles, your own designs, or a different one each day.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-        // PushedWidgetView applies the standard margins itself, trimmed for
-        // the graph layout so the squares can run closer to the edges.
+        // PushedWidgetView applies the standard margins itself, so its
+        // squares can be sized to meet them exactly.
         .contentMarginsDisabled()
     }
 }

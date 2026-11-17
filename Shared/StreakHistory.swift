@@ -24,7 +24,9 @@ struct StreakHistory {
     /// The date of the last entry in `days`.
     let endDate: Date?
 
-    private let todayIndex: Int?
+    /// Where today sits in `days`: the last entry, except when GitHub's
+    /// date has run a day ahead of the phone's. Nil without readable dates.
+    let todayIndex: Int?
     private let protection: StreakProtection
     private let calendar: Calendar
 

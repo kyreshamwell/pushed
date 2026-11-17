@@ -3,7 +3,8 @@ import WidgetKit
 import XCTest
 
 /// Not a test of behavior: draws the widget in every style to PNG files so a
-/// change to how squares look can be checked by eye without a home screen.
+/// change to how squares look can be checked by eye without a home screen,
+/// and against the numbers in Design/1.3-redesign/Widget.dc.html.
 /// Skipped unless a folder is given:
 ///
 ///     TEST_RUNNER_PUSHED_RENDER_DIR=/tmp/pushed-renders xcodebuild test \
@@ -68,7 +69,10 @@ final class RenderPreviews: XCTestCase {
                     .background(Color(hex: 0x1B2A44))
                 try write(lock, named: "\(setName)-lock-\(familyName)", to: folder)
             }
-            for style in WidgetStyle.designs {
+            // Classic follows the phone's appearance, so it's drawn both ways.
+            let looks: [(WidgetStyle, String, ColorScheme)] = WidgetStyle.designs.map { ($0, $0.rawValue, .dark) }
+                + [(.classic, "classic-light", .light)]
+            for (style, lookName, scheme) in looks {
                 for layout in WidgetLayout.allCases {
                     for (family, familyName) in families {
                         let card = WidgetPreviewCard(
@@ -76,15 +80,15 @@ final class RenderPreviews: XCTestCase {
                             family: family,
                             style: style,
                             layout: layout,
-                            weeks: family == .systemLarge ? 52 : 26,
                             icon: "🔥",
                             custom: .default,
                             protection: protection,
                             now: now
                         )
                         .padding(24)
-                        .background(Color(hex: 0x101014))
-                        try write(card, named: "\(setName)-\(style.rawValue)-\(layout.rawValue)-\(familyName)", to: folder)
+                        .background(Color(hex: scheme == .dark ? 0x101014 : 0xE5E5EA))
+                        .environment(\.colorScheme, scheme)
+                        try write(card, named: "\(setName)-\(lookName)-\(layout.rawValue)-\(familyName)", to: folder)
                     }
                 }
             }
@@ -103,24 +107,33 @@ final class RenderPreviews: XCTestCase {
 
         func card(
             _ name: String, family: WidgetFamily = .systemMedium, style: WidgetStyle = .classic,
-            layout: WidgetLayout = .graph, weeks: Int = 26, stat: WidgetStat = .streak,
-            custom: CustomWidgetStyle = .default
+            layout: WidgetLayout = .graph, stat: WidgetStat = .streak,
+            custom: CustomWidgetStyle = .default, snapshot: ContributionSnapshot? = nil
         ) throws {
             let view = WidgetPreviewCard(
-                snapshot: snapshot, family: family, style: style, layout: layout, weeks: weeks,
+                snapshot: snapshot ?? defaultSnapshot, family: family, style: style, layout: layout,
                 stat: stat, icon: "🔥", custom: custom, protection: protection, now: now
             )
             .padding(24)
             .background(Color(hex: 0x101014))
+            .environment(\.colorScheme, .dark)
             try write(view, named: name, to: folder)
         }
-
-        try card("range-1-month", weeks: 4)
-        try card("range-1-year", weeks: 52)
+        let defaultSnapshot = snapshot
 
         for stat in WidgetStat.allCases {
-            try card("show-graph-\(stat.rawValue)", style: .aurora, stat: stat)
+            for (family, size) in [(WidgetFamily.systemSmall, "small"), (.systemMedium, "medium"), (.systemLarge, "large")] {
+                try card("show-graph-\(stat.rawValue)-\(size)", family: family, style: .aurora, stat: stat)
+            }
             try card("show-streak-\(stat.rawValue)", style: .aurora, layout: .streak, stat: stat)
+        }
+
+        // Not pushed yet: the dot or circle empties and nothing else moves.
+        let waiting = weekendsOff(.sample(quiet: 1, asOf: now), asOf: now)
+        for style in WidgetStyle.builtIn {
+            for (family, size) in [(WidgetFamily.systemSmall, "small"), (.systemMedium, "medium"), (.systemLarge, "large")] {
+                try card("pending-\(style.rawValue)-\(size)", family: family, style: style, snapshot: waiting)
+            }
         }
 
         for style in [WidgetStyle.classic, .terminal, .ember] {
@@ -134,15 +147,16 @@ final class RenderPreviews: XCTestCase {
         try card("custom-empty-color", style: .custom, custom: picked)
         var roomy = CustomWidgetStyle.default
         roomy.spacing = .roomy
-        try card("custom-roomy", style: .custom, weeks: 13, custom: roomy)
+        try card("custom-roomy", style: .custom, custom: roomy)
         var tight = CustomWidgetStyle.default
         tight.spacing = .tight
-        try card("custom-tight", style: .custom, weeks: 13, custom: tight)
+        try card("custom-tight", style: .custom, custom: tight)
         var minimal = CustomWidgetStyle.starters[4]
         minimal.minimal = true
         try card("custom-minimal-graph", style: .custom, custom: minimal)
         try card("custom-minimal-streak", style: .custom, layout: .streak, custom: minimal)
         try card("custom-minimal-week", family: .systemSmall, style: .custom, layout: .week, custom: minimal)
+        try card("custom-minimal-large", family: .systemLarge, style: .custom, custom: minimal)
     }
 
     /// A freeze and rest days in each way of marking them, and the extra
@@ -167,17 +181,30 @@ final class RenderPreviews: XCTestCase {
 
         func card(
             _ name: String, family: WidgetFamily = .systemMedium, style: WidgetStyle = .classic,
-            layout: WidgetLayout = .graph, weeks: Int = 13, custom: CustomWidgetStyle = .default,
+            layout: WidgetLayout = .graph, custom: CustomWidgetStyle = .default,
             mark: DayOffMark = .ring
         ) throws {
             let view = WidgetPreviewCard(
-                snapshot: snapshot, family: family, style: style, layout: layout, weeks: weeks,
+                snapshot: snapshot, family: family, style: style, layout: layout,
                 icon: "🔥", custom: custom, protection: protection, dayOffMark: mark, now: now
             )
             .padding(24)
             .background(Color(hex: 0x101014))
+            .environment(\.colorScheme, .dark)
             try write(view, named: name, to: folder)
         }
+
+        // Marks: a symbol for every day, rest days and the freeze included.
+        for (family, size) in [(WidgetFamily.systemSmall, "small"), (.systemMedium, "medium"), (.systemLarge, "large")] {
+            for layout in WidgetLayout.allCases {
+                try card("marks-\(layout.rawValue)-\(size)", family: family, style: .marks, layout: layout)
+            }
+        }
+        var inked = CustomWidgetStyle.seeded(from: .marks)
+        inked.squares = RGBAColor(hex: 0x5B8DEF)
+        try card("marks-custom-blue", style: .custom, custom: inked)
+        inked.missedSquares = RGBAColor(hex: 0xE5484D)
+        try card("marks-custom-missed", family: .systemLarge, style: .custom, custom: inked)
 
         for mark in DayOffMark.allCases {
             for style in [WidgetStyle.classic, .terminal, .aurora, .paper] {
@@ -221,7 +248,7 @@ final class RenderPreviews: XCTestCase {
             custom.missedSquares = RGBAColor(hex: custom.usesLightText ? 0xE5484D : 0xD93D42)
             for (family, name, layout) in [(WidgetFamily.systemMedium, "graph", WidgetLayout.graph), (.systemLarge, "large", .graph), (.systemMedium, "week", .week)] {
                 let view = WidgetPreviewCard(
-                    snapshot: snapshot, family: family, style: .custom, layout: layout, weeks: 26,
+                    snapshot: snapshot, family: family, style: .custom, layout: layout,
                     icon: "🔥", custom: custom, protection: protection, now: now
                 )
                 .padding(24)
@@ -257,10 +284,10 @@ final class RenderPreviews: XCTestCase {
 
         func card(
             _ name: String, _ family: WidgetFamily, _ style: WidgetStyle, _ layout: WidgetLayout,
-            weeks: Int = 26, stat: WidgetStat = .streak, custom: CustomWidgetStyle = .default
+            stat: WidgetStat = .streak, custom: CustomWidgetStyle = .default
         ) throws {
             let view = WidgetPreviewCard(
-                snapshot: snapshot, family: family, style: style, layout: layout, weeks: weeks,
+                snapshot: snapshot, family: family, style: style, layout: layout,
                 stat: stat, icon: "🔥", custom: custom, protection: protection, dayOffMark: .stripes, now: now
             )
             .environment(\.colorScheme, .dark)

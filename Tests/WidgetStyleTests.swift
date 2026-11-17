@@ -143,9 +143,30 @@ final class WidgetStyleTests: XCTestCase {
 
     // MARK: - Per-widget choices
 
-    func testRangeEitherFollowsTheAppOrSetsItsOwnWeeks() {
-        XCTAssertNil(WidgetRange.app.weeks)
-        XCTAssertEqual(WidgetRange.allCases.compactMap(\.weeks), [4, 13, 26, 52], "the same ranges the app offers")
+    func testMarksIsABuiltInLookDrawnInSymbols() {
+        XCTAssertEqual(WidgetStyle.builtIn, [.classic, .aurora, .ember, .terminal, .paper, .marks])
+        XCTAssertEqual(WidgetStyle.marks.name, "Marks")
+        XCTAssertFalse(WidgetStyle.marks.tagline.isEmpty)
+        let theme = WidgetStyle.marks.theme(for: .dark)
+        XCTAssertEqual(theme.cellMode, .marks)
+        XCTAssertFalse(theme.glows, "one solid color, no glow")
+        XCTAssertEqual(RGBAColor(theme.markInk).hex, RGBAColor(hex: 0xF2F2F2).hex)
+        for style in WidgetStyle.builtIn where style != .marks {
+            XCTAssertEqual(style.theme(for: .dark).cellMode, .squares, "\(style)")
+        }
+    }
+
+    func testClassicIsGitHubsGraphInLightAndDark() {
+        let dark = WidgetStyle.classic.theme(for: .dark)
+        XCTAssertEqual(dark.levels.map { RGBAColor($0).hex }, [0x161B22, 0x0E4429, 0x006D32, 0x26A641, 0x39D353].map { RGBAColor(hex: $0).hex })
+        let light = WidgetStyle.classic.theme(for: .light)
+        XCTAssertEqual(light.levels.map { RGBAColor($0).hex }, [0xEBEDF0, 0x9BE9A8, 0x40C463, 0x30A14E, 0x216E39].map { RGBAColor(hex: $0).hex })
+        XCTAssertEqual(dark.cornerRadius(for: 12), 12 * 0.18, accuracy: 0.001, "near-square corners")
+    }
+
+    func testOnlyTheWarmAndCoolLooksGlow() {
+        let glowing = WidgetStyle.builtIn.filter { $0.theme(for: .dark).glows }
+        XCTAssertEqual(glowing, [.aurora, .ember])
     }
 
     func testBuiltInStylesKeepTheUsualSpacingAndWords() {

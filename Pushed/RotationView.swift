@@ -29,8 +29,7 @@ struct RotationView: View {
                         family: .systemMedium,
                         style: today.style,
                         layout: .graph,
-                        weeks: weeks,
-                        icon: icon,
+                            icon: icon,
                         custom: today.custom
                     )
                 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		08E8FD884EE9D16D1CB58E55 /* GraphLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F94D83FBC5FB5E83CA4ECCE /* GraphLayoutTests.swift */; };
 		0914054F8A073404D03910B3 /* SampleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = C210392403CC7D9EC48129B5 /* SampleSnapshot.swift */; };
 		09722BDE650C810F0E7EB3DB /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B082ED41F40B9E4249666E6 /* NotificationScheduler.swift */; };
 		09D2FCF6CC7BC3C121886642 /* StyleLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA188378D027BFE3661B74C /* StyleLibrary.swift */; };
@@ -14,6 +15,7 @@
 		0FA5664D00FC951A5D0E6611 /* DemoMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5921B643B6E6718C671B3F23 /* DemoMode.swift */; };
 		10AB792089C6AB4C0F73F2A8 /* BuildEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3FEC410101475E260DFA9CD /* BuildEnvironment.swift */; };
 		11529A5CE359406B011535D5 /* GitHubContributionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB8F38428CF4859140DC80E /* GitHubContributionsService.swift */; };
+		1563944542C49C7EEBBF75B0 /* DayGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C157E4CD9986861B07231A91 /* DayGrid.swift */; };
 		1795A490CA93D6348166C3F6 /* NotificationPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664C4B7FBA91D5C599AF285C /* NotificationPlanner.swift */; };
 		1B75521AA8DC66D091A845B2 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C73DA520861AF69A7CDE0A22 /* KeychainHelper.swift */; };
 		1DB35E6904F230C16698752A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9382AAFB9BD3AAAF8A5EF178 /* ContentView.swift */; };
@@ -36,6 +38,7 @@
 		4B5919075F71A13AE08240EE /* PushedWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DFF3012874A2F6D0A471656 /* PushedWidget.swift */; };
 		53E07968FF007B7208BE40AB /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B082ED41F40B9E4249666E6 /* NotificationScheduler.swift */; };
 		5606700E3894A58D7ADAC736 /* WidgetStyleGallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9E56B0C4271B386A35C7E51 /* WidgetStyleGallery.swift */; };
+		5952A13162788A70F9B5994B /* GraphLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524AD059E4EF57B66E6665DA /* GraphLayout.swift */; };
 		59686A95603E106D39EE4FFA /* TestScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518E378FDF8CFFC9069799E3 /* TestScenario.swift */; };
 		5AC69282B81DE682D3DE5EDB /* ContributionSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356EF749711302E46F9D9993 /* ContributionSnapshot.swift */; };
 		5B18F3DC34EAC99DF06D4651 /* ContributionSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356EF749711302E46F9D9993 /* ContributionSnapshot.swift */; };
@@ -45,12 +48,14 @@
 		668B50F678F6E6B598D76384 /* SampleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = C210392403CC7D9EC48129B5 /* SampleSnapshot.swift */; };
 		6721AB2CC9045B7D1227D5BC /* WidgetOptionsIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 160810259FC8A024A879E04B /* WidgetOptionsIntent.swift */; };
 		6C394A25FE3C5D7965447F31 /* DemoMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5921B643B6E6718C671B3F23 /* DemoMode.swift */; };
+		6F3D56B11E3A54D3EA8CDA6F /* DayGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C157E4CD9986861B07231A91 /* DayGrid.swift */; };
 		78C8D99735E2970EB8018E0D /* NotificationPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664C4B7FBA91D5C599AF285C /* NotificationPlanner.swift */; };
 		7F7AC2CFCE27559F7FF757C7 /* StreakHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1972243E57FD75928BDB3F /* StreakHistory.swift */; };
 		82A64652E3159D82E7357E26 /* GitHubContributionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB8F38428CF4859140DC80E /* GitHubContributionsService.swift */; };
 		82BC5C6EB5C424E3A6418B9A /* PushedWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0060EEE3E0F0F7A5137B5B05 /* PushedWidgetView.swift */; };
 		83810D573382F4E263B39438 /* WidgetStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E68E8ED2CC67D3077592E375 /* WidgetStyle.swift */; };
 		8521D48C139C9CFAB066C8CE /* GitHubContributionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB8F38428CF4859140DC80E /* GitHubContributionsService.swift */; };
+		86E947205E99D91FE1999335 /* GraphLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524AD059E4EF57B66E6665DA /* GraphLayout.swift */; };
 		8A3048B36F17FD77A7791173 /* TestScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518E378FDF8CFFC9069799E3 /* TestScenario.swift */; };
 		8BA850EF7E7F4C31EBDE7761 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F70CE2C5FB12EE2315624FD1 /* PrivacyInfo.xcprivacy */; };
 		8DDC6C5316DEC13038E974B8 /* StreakIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAE6B55ECF230C2D6CADFFC /* StreakIcon.swift */; };
@@ -72,6 +77,7 @@
 		A6F34FFB9B18C911E6AB0C1F /* StreakProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7855271EB0947B480EE3EB36 /* StreakProtection.swift */; };
 		AD08C919A7104B03E83239A3 /* StreakHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1972243E57FD75928BDB3F /* StreakHistory.swift */; };
 		B01C906815B6BC35B95DF389 /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494CC5CB24A472B8B7BAF655 /* Provider.swift */; };
+		B144B0C2905398282476CACE /* GraphLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524AD059E4EF57B66E6665DA /* GraphLayout.swift */; };
 		B845E3C3C68F786DD83B0255 /* CustomWidgetStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01686006985EB29F6E040356 /* CustomWidgetStyle.swift */; };
 		B8EBFE2A12615702DF38ED3E /* ContributionGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768B00CB100AB92E54E15EC8 /* ContributionGridView.swift */; };
 		BF53E5D80750D8E1BA4371D1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 621F674DC7CA93253B2F6E7F /* PrivacyInfo.xcprivacy */; };
@@ -82,6 +88,7 @@
 		D2DB709F34BD80A598E39BED /* StreakIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5360FCFAA9469CAC0C10F4 /* StreakIconTests.swift */; };
 		D761D1511140311CBEB8C028 /* StreakHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1972243E57FD75928BDB3F /* StreakHistory.swift */; };
 		D941A6B29C44C6C5BBB2D8BA /* ContributionGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768B00CB100AB92E54E15EC8 /* ContributionGridView.swift */; };
+		DA16CE916BF45234A02A295D /* DayGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C157E4CD9986861B07231A91 /* DayGrid.swift */; };
 		E3CA1FD2716AA626E1065F6F /* SelfCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5A48E57F4CB00C97CA6347 /* SelfCheck.swift */; };
 		E7736AC7475D6AABEE08C67C /* StreakIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAE6B55ECF230C2D6CADFFC /* StreakIcon.swift */; };
 		EC8DB1B82BD3FF7157E85726 /* StyleLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA188378D027BFE3661B74C /* StyleLibrary.swift */; };
@@ -134,6 +141,7 @@
 		458C3B2F8BFBF2E2EE9487A4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		494CC5CB24A472B8B7BAF655 /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		518E378FDF8CFFC9069799E3 /* TestScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestScenario.swift; sourceTree = "<group>"; };
+		524AD059E4EF57B66E6665DA /* GraphLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphLayout.swift; sourceTree = "<group>"; };
 		5434003CD77A13E1BB2B14D6 /* StreakIconPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakIconPicker.swift; sourceTree = "<group>"; };
 		5921B643B6E6718C671B3F23 /* DemoMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoMode.swift; sourceTree = "<group>"; };
 		5DFF3012874A2F6D0A471656 /* PushedWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushedWidget.swift; sourceTree = "<group>"; };
@@ -150,11 +158,13 @@
 		8B783BED2905B46D710B79BE /* WidgetStyleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStyleTests.swift; sourceTree = "<group>"; };
 		9382AAFB9BD3AAAF8A5EF178 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		9F5A48E57F4CB00C97CA6347 /* SelfCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelfCheck.swift; sourceTree = "<group>"; };
+		9F94D83FBC5FB5E83CA4ECCE /* GraphLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphLayoutTests.swift; sourceTree = "<group>"; };
 		A3FEC410101475E260DFA9CD /* BuildEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildEnvironment.swift; sourceTree = "<group>"; };
 		AF5360FCFAA9469CAC0C10F4 /* StreakIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakIconTests.swift; sourceTree = "<group>"; };
 		BAA188378D027BFE3661B74C /* StyleLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleLibrary.swift; sourceTree = "<group>"; };
 		BC610E5853187959D7F02A29 /* NotificationSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSchedulerTests.swift; sourceTree = "<group>"; };
 		BDFB708858C0AE4863B86A02 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		C157E4CD9986861B07231A91 /* DayGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayGrid.swift; sourceTree = "<group>"; };
 		C210392403CC7D9EC48129B5 /* SampleSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleSnapshot.swift; sourceTree = "<group>"; };
 		C47D328901A7477BB8FC7E2D /* LockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenView.swift; sourceTree = "<group>"; };
 		C4960F548FF0300E98221870 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -213,8 +223,10 @@
 				768B00CB100AB92E54E15EC8 /* ContributionGridView.swift */,
 				356EF749711302E46F9D9993 /* ContributionSnapshot.swift */,
 				01686006985EB29F6E040356 /* CustomWidgetStyle.swift */,
+				C157E4CD9986861B07231A91 /* DayGrid.swift */,
 				5921B643B6E6718C671B3F23 /* DemoMode.swift */,
 				5FB8F38428CF4859140DC80E /* GitHubContributionsService.swift */,
+				524AD059E4EF57B66E6665DA /* GraphLayout.swift */,
 				C73DA520861AF69A7CDE0A22 /* KeychainHelper.swift */,
 				C47D328901A7477BB8FC7E2D /* LockScreenView.swift */,
 				664C4B7FBA91D5C599AF285C /* NotificationPlanner.swift */,
@@ -247,6 +259,7 @@
 			children = (
 				2EB3DEFB8B77FC966431D7EC /* AppConfigTests.swift */,
 				5EC5A1FC6ABF2843BC34E681 /* CustomWidgetStyleTests.swift */,
+				9F94D83FBC5FB5E83CA4ECCE /* GraphLayoutTests.swift */,
 				D7697D0024228D0E93A8933E /* NotificationPlannerTests.swift */,
 				BC610E5853187959D7F02A29 /* NotificationSchedulerTests.swift */,
 				8497ED0BB23F4F6F4D87C225 /* PushedLogicTests.swift */,
@@ -408,8 +421,11 @@
 				5AC69282B81DE682D3DE5EDB /* ContributionSnapshot.swift in Sources */,
 				CFE6B6CC29B6C174006D8D81 /* CustomWidgetStyle.swift in Sources */,
 				2F507FD0139848E18427C320 /* CustomWidgetStyleTests.swift in Sources */,
+				6F3D56B11E3A54D3EA8CDA6F /* DayGrid.swift in Sources */,
 				6C394A25FE3C5D7965447F31 /* DemoMode.swift in Sources */,
 				11529A5CE359406B011535D5 /* GitHubContributionsService.swift in Sources */,
+				86E947205E99D91FE1999335 /* GraphLayout.swift in Sources */,
+				08E8FD884EE9D16D1CB58E55 /* GraphLayoutTests.swift in Sources */,
 				9DF03C573CACCBC79895542F /* KeychainHelper.swift in Sources */,
 				1DD6B09648F4967F415AA4EF /* LockScreenView.swift in Sources */,
 				1795A490CA93D6348166C3F6 /* NotificationPlanner.swift in Sources */,
@@ -445,9 +461,11 @@
 				5B18F3DC34EAC99DF06D4651 /* ContributionSnapshot.swift in Sources */,
 				92BD9457EEAC370F979A6367 /* CustomStyleEditor.swift in Sources */,
 				1DEB28873E9DEB1B160A5B47 /* CustomWidgetStyle.swift in Sources */,
+				DA16CE916BF45234A02A295D /* DayGrid.swift in Sources */,
 				F79F449D798D153E08CF1780 /* DebugNotificationsView.swift in Sources */,
 				0FA5664D00FC951A5D0E6611 /* DemoMode.swift in Sources */,
 				82A64652E3159D82E7357E26 /* GitHubContributionsService.swift in Sources */,
+				B144B0C2905398282476CACE /* GraphLayout.swift in Sources */,
 				240C40E9A8A110824C24CE2A /* KeychainHelper.swift in Sources */,
 				0F8F12E58D8E78FC327C94FA /* LockScreenView.swift in Sources */,
 				78C8D99735E2970EB8018E0D /* NotificationPlanner.swift in Sources */,
@@ -478,8 +496,10 @@
 				9CE98599BD88EEAF9A199E47 /* ContributionGridView.swift in Sources */,
 				9602F674A015E2B9A1815050 /* ContributionSnapshot.swift in Sources */,
 				B845E3C3C68F786DD83B0255 /* CustomWidgetStyle.swift in Sources */,
+				1563944542C49C7EEBBF75B0 /* DayGrid.swift in Sources */,
 				4740B4BB165033622DD29B63 /* DemoMode.swift in Sources */,
 				8521D48C139C9CFAB066C8CE /* GitHubContributionsService.swift in Sources */,
+				5952A13162788A70F9B5994B /* GraphLayout.swift in Sources */,
 				1B75521AA8DC66D091A845B2 /* KeychainHelper.swift in Sources */,
 				2EA1E469D961AE45A8E30D4C /* LockScreenView.swift in Sources */,
 				3A0B84A81CABB47AD547BEC8 /* LockScreenWidget.swift in Sources */,

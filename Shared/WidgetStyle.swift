@@ -84,27 +84,6 @@ enum WidgetLayout: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// How much history a widget's graph covers, chosen per widget.
-enum WidgetRange: String, CaseIterable, Identifiable, Sendable {
-    /// Whatever the app's time range is set to, which is what every widget
-    /// showed before this was a choice.
-    case app
-    case month, threeMonths, sixMonths, year
-
-    var id: String { rawValue }
-
-    /// Nil means the app's setting.
-    var weeks: Int? {
-        switch self {
-        case .app: nil
-        case .month: 4
-        case .threeMonths: 13
-        case .sixMonths: 26
-        case .year: 52
-        }
-    }
-}
-
 /// The number a widget leads with.
 enum WidgetStat: String, CaseIterable, Identifiable, Sendable {
     case streak

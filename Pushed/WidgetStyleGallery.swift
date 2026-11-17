@@ -149,7 +149,6 @@ struct WidgetStyleGallery: View {
                     family: family,
                     style: look.style,
                     layout: layout,
-                    weeks: weeks,
                     icon: icon,
                     custom: look.custom
                 )
