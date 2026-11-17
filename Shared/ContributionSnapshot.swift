@@ -5,7 +5,7 @@ struct ContributionSnapshot: Codable {
     // GitHub intensity levels 0-4, oldest first, trimmed to whole weeks so
     // column 0 of the grid is a real Sunday-Saturday week like on github.com.
     let recentLevels: [Int]
-    // "yyyy-MM-dd" of the final entry in recentLevels — anchors every square
+    // "yyyy-MM-dd" of the final entry in recentLevels. It anchors every square
     // to a real date so the grid can draw month/weekday labels.
     let lastDate: String
     let fetchedAt: Date

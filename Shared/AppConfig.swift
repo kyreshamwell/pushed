@@ -102,7 +102,7 @@ enum AppConfig {
     // MARK: - Notifications
     //
     // Lives in the shared container because the widget extension reconciles
-    // notifications too — its timeline refresh is the background hook that
+    // notifications too: its timeline refresh is the background hook that
     // cancels a nudge once you've actually pushed.
 
     enum Keys {
@@ -120,7 +120,7 @@ enum AppConfig {
     }
 
     /// `integer(forKey:)` can't tell "unset" from "zero", which matters for an
-    /// hour of 0 — so unset falls through to the documented default.
+    /// hour of 0, so unset falls through to the documented default.
     private static func storedInt(_ key: String, default fallback: Int) -> Int {
         (sharedDefaults.object(forKey: key) as? Int) ?? fallback
     }
