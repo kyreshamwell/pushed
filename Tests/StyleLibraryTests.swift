@@ -118,78 +118,240 @@ final class StyleLibraryTests: XCTestCase {
 
     // MARK: - Daily rotation
 
-    func testTheRotationMovesOnByOneEachDay() {
-        let library = three
-        let names = (12...17).map { library.rotationPick(on: date(String(format: "2026-10-%02d", $0))).name }
+    private var calendar: Calendar { Calendar(identifier: .gregorian) }
 
-        XCTAssertEqual(Set(names), ["Coral", "Mint", "Sky"])
-        for (today, tomorrow) in zip(names, names.dropFirst()) {
-            XCTAssertNotEqual(today, tomorrow)
+    /// The names the rotation shows on each day from `first`, for `count` days.
+    private func names(_ library: StyleLibrary, from first: String, days count: Int) -> [String] {
+        let start = date(first)
+        return (0..<count).map {
+            library.rotationPick(on: calendar.date(byAdding: .day, value: $0, to: start)!).name
         }
-        XCTAssertEqual(names[0], names[3], "three styles come round again every three days")
+    }
+
+    func testNothingInTheRotationShowsClassic() {
+        XCTAssertTrue(three.rotation.isEmpty)
+        XCTAssertEqual(three.rotationPick(on: date("2026-10-12")).style, .classic)
+        XCTAssertEqual(three.look(for: .rotation, on: date("2026-10-12")).style, .classic)
+        XCTAssertTrue(three.rotationSchedule(from: date("2026-10-12")).isEmpty)
+    }
+
+    func testLooksTakeTurnsInTheOrderTheyWereAdded() {
+        var library = three
+        let day = date("2026-10-12")
+        library.addToRotation(.builtIn(.paper), on: day)
+        library.addToRotation(.saved(library.styles[2].id), on: day)
+        library.addToRotation(.builtIn(.aurora), on: day)
+
+        XCTAssertEqual(library.rotation, [.builtIn(.paper), .saved(library.styles[2].id), .builtIn(.aurora)])
+        XCTAssertEqual(names(library, from: "2026-10-12", days: 6), ["Paper", "Sky", "Aurora", "Paper", "Sky", "Aurora"])
+        XCTAssertEqual(library.rotationSchedule(from: day).compactMap { library.look(of: $0)?.name }, ["Paper", "Sky", "Aurora"])
+    }
+
+    func testAddingALookNeverChangesTodaysLook() {
+        var library = three
+        let monday = date("2026-10-12")
+        library.addToRotation(.builtIn(.ember), on: monday)
+        library.addToRotation(.builtIn(.terminal), on: monday)
+        let wednesday = date("2026-10-14")
+        let before = library.rotationPick(on: wednesday).name
+
+        library.addToRotation(.builtIn(.marks), on: wednesday)
+        XCTAssertEqual(library.rotationPick(on: wednesday).name, before)
+        XCTAssertEqual(names(library, from: "2026-10-14", days: 3), ["Ember", "Terminal", "Marks"])
+    }
+
+    func testTheFirstLookAddedIsTodays() {
+        var library = three
+        let day = date("2026-10-20")
+        library.addToRotation(.builtIn(.terminal), on: day)
+        XCTAssertEqual(library.rotationPick(on: day).name, "Terminal")
+    }
+
+    func testRemovingTodaysLookMovesTodayToTheNextOne() {
+        var library = three
+        let day = date("2026-10-12")
+        for style in [WidgetStyle.classic, .aurora, .ember] { library.addToRotation(.builtIn(style), on: day) }
+        XCTAssertEqual(library.rotationPick(on: day).name, "Classic")
+
+        library.removeFromRotation(.builtIn(.classic), on: day)
+        XCTAssertEqual(names(library, from: "2026-10-12", days: 3), ["Aurora", "Ember", "Aurora"])
+    }
+
+    func testRemovingTheLastLookInLineWrapsTodayToTheFirst() {
+        var library = three
+        let monday = date("2026-10-12")
+        for style in [WidgetStyle.classic, .aurora, .ember] { library.addToRotation(.builtIn(style), on: monday) }
+        let wednesday = date("2026-10-14")
+        XCTAssertEqual(library.rotationPick(on: wednesday).name, "Ember")
+
+        library.removeFromRotation(.builtIn(.ember), on: wednesday)
+        XCTAssertEqual(names(library, from: "2026-10-14", days: 2), ["Classic", "Aurora"])
+    }
+
+    func testRemovingAnotherLookKeepsTodaysLook() {
+        var library = three
+        let monday = date("2026-10-12")
+        for style in [WidgetStyle.classic, .aurora, .ember, .paper] { library.addToRotation(.builtIn(style), on: monday) }
+        let wednesday = date("2026-10-14")
+        XCTAssertEqual(library.rotationPick(on: wednesday).name, "Ember")
+
+        library.removeFromRotation(.builtIn(.classic), on: wednesday)
+        XCTAssertEqual(names(library, from: "2026-10-14", days: 3), ["Ember", "Paper", "Aurora"])
+
+        library.removeFromRotation(.builtIn(.paper), on: wednesday)
+        XCTAssertEqual(names(library, from: "2026-10-14", days: 3), ["Ember", "Aurora", "Ember"])
+    }
+
+    func testRemovingEveryLookEmptiesTheRotation() {
+        var library = three
+        let day = date("2026-10-12")
+        library.toggleRotation(.builtIn(.aurora), on: day)
+        library.toggleRotation(.builtIn(.aurora), on: day)
+        XCTAssertTrue(library.rotation.isEmpty)
+        XCTAssertNil(library.anchor)
+        XCTAssertEqual(library.rotationPick(on: day).style, .classic)
     }
 
     func testTheRotationHoldsAllDay() {
-        let library = three
-        let morning = date("2026-10-12").addingTimeInterval(60)
-        let night = date("2026-10-12").addingTimeInterval(24 * 3600 - 60)
+        var library = three
+        let day = date("2026-10-12")
+        library.addToRotation(.builtIn(.aurora), on: day)
+        library.addToRotation(.builtIn(.ember), on: day)
+        let morning = day.addingTimeInterval(60)
+        let night = day.addingTimeInterval(24 * 3600 - 60)
         XCTAssertEqual(library.rotationPick(on: morning), library.rotationPick(on: night))
     }
 
-    func testOnlyCheckedStylesTakeTurnsOnceAnyAre() {
+    func testOneLookStaysPut() {
         var library = three
-        library.styles[0].inRotation = true
-        library.styles[2].inRotation = true
-
-        XCTAssertEqual(library.rotation.map(\.name), ["Coral", "Sky"])
-        XCTAssertTrue(library.hasCheckedStyles)
+        library.toggleRotation(library.styles[1].id, on: date("2026-10-12"))
+        XCTAssertEqual(Set(names(library, from: "2026-10-12", days: 7)), ["Mint"])
     }
 
-    func testWithNothingCheckedAllOfYourStylesTakeTurns() {
-        XCTAssertEqual(three.rotation.map(\.name), ["Coral", "Mint", "Sky"])
-        XCTAssertFalse(three.hasCheckedStyles)
-    }
-
-    func testOneCheckedStyleStaysPut() {
+    func testOnlyRealLooksCanBeAdded() {
         var library = three
-        library.toggleRotation(library.styles[1].id)
-        let week = (12...18).map { library.rotationPick(on: date(String(format: "2026-10-%02d", $0))).name }
-        XCTAssertEqual(Set(week), ["Mint"])
+        library.addToRotation(.builtIn(.custom))
+        library.addToRotation(.builtIn(.rotation))
+        library.addToRotation(.saved(UUID()))
+        library.addToRotation(.builtIn(.aurora))
+        library.addToRotation(.builtIn(.aurora))
+        XCTAssertEqual(library.rotation, [.builtIn(.aurora)])
     }
 
-    func testBuiltInStylesCanBeCheckedOneByOne() {
+    func testDeletingASavedStyleTakesItOutOfTheRotation() {
         var library = three
-        library.toggleRotation(.paper)
-        library.toggleRotation(.terminal)
+        let day = date("2026-10-12")
+        let mint = library.styles[1]
+        library.addToRotation(.saved(mint.id), on: day)
+        library.addToRotation(.builtIn(.ember), on: day)
+        XCTAssertEqual(library.rotationPick(on: day).name, "Mint")
 
-        XCTAssertEqual(library.rotation.map(\.style), [.terminal, .paper], "in the gallery's order")
-        XCTAssertTrue(library.isInRotation(.paper))
+        library.remove(mint.id, on: day)
+        XCTAssertNil(library[mint.id])
+        XCTAssertEqual(library.rotation, [.builtIn(.ember)])
+        XCTAssertEqual(library.rotationPick(on: day).name, "Ember", "today moves on to the next look")
 
-        library.toggleRotation(.paper)
-        XCTAssertFalse(library.isInRotation(.paper))
-        XCTAssertEqual(library.rotation.map(\.style), [.terminal])
+        library.addToRotation(.saved(library.styles[1].id), on: day)
+        library[library.styles[1].id] = nil
+        XCTAssertEqual(library.rotation, [.builtIn(.ember)], "the subscript deletes from the rotation too")
     }
 
-    func testOnlyRealBuiltInStylesCanBeChecked() {
+    func testAWidgetSetToRotationWearsWhatTheStripShowsOnAnyDay() {
         var library = three
-        library.toggleRotation(.custom)
-        library.toggleRotation(.rotation)
-        XCTAssertTrue(library.rotatingBuiltIns.isEmpty)
+        let today = date("2026-10-12")
+        library.addToRotation(.builtIn(.aurora), on: today)
+        library.addToRotation(.builtIn(.ember), on: today)
+        library.addToRotation(.saved(library.styles[0].id), on: today)
+        let strip = library.rotationSchedule(from: today)
+
+        for offset in 0..<40 {
+            let day = calendar.date(byAdding: .day, value: offset, to: today)!
+            let expected = library.look(of: strip[offset % strip.count])
+            XCTAssertEqual(library.look(for: .rotation, on: day), expected, "day \(offset)")
+            // The widget's midnight entry is drawn for the first moment of the day.
+            XCTAssertEqual(library.look(for: .rotation, on: calendar.startOfDay(for: day)), expected)
+        }
+        XCTAssertNotEqual(library.look(for: .rotation, on: today).style, .rotation, "always something drawable")
     }
 
-    func testAWidgetSetToRotationWearsThatDaysPick() {
-        let library = three
-        let day = date("2026-10-14")
-        XCTAssertEqual(library.look(for: .rotation, on: day), library.rotationPick(on: day))
-        XCTAssertNotEqual(library.look(for: .rotation, on: day).style, .rotation, "always something drawable")
+    func testTheScheduleStartsWithTodaysLook() {
+        var library = three
+        let monday = date("2026-10-12")
+        for style in [WidgetStyle.classic, .aurora, .ember] { library.addToRotation(.builtIn(style), on: monday) }
+        XCTAssertEqual(
+            library.rotationSchedule(from: date("2026-10-13")),
+            [.builtIn(.aurora), .builtIn(.ember), .builtIn(.classic)]
+        )
+    }
+
+    // MARK: - The rotation from 1.2
+
+    /// A 1.2 library as it was saved: a flag on each style, plus the built-ins.
+    private func legacy(checked: [Int], builtIns: [String]) throws -> StyleLibrary {
+        let styles = try three.styles.enumerated().map { index, saved -> [String: Any] in
+            var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(saved)) as! [String: Any]
+            object["inRotation"] = checked.contains(index)
+            return object
+        }
+        let json: [String: Any] = ["styles": styles, "rotatingBuiltIns": builtIns]
+        return try JSONDecoder().decode(StyleLibrary.self, from: JSONSerialization.data(withJSONObject: json))
+    }
+
+    /// What 1.2 showed on a day: its pool, counted from 1 January 2001.
+    private func oldPick(_ pool: [String], on day: Date) -> String {
+        let start = calendar.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let number = calendar.dateComponents([.day], from: start, to: calendar.startOfDay(for: day)).day!
+        return pool[number % pool.count]
+    }
+
+    func testTheOldRotationKeepsItsOrderYoursFirst() throws {
+        let library = try legacy(checked: [2, 0], builtIns: ["paper", "terminal"])
+        XCTAssertEqual(library.rotationLooks.map(\.name), ["Coral", "Sky", "Terminal", "Paper"])
+    }
+
+    func testEveryWidgetKeepsItsLookAfterTheUpdate() throws {
+        let library = try legacy(checked: [1], builtIns: ["ember", "aurora"])
+        let pool = ["Mint", "Aurora", "Ember"]
+        for offset in 0..<30 {
+            let day = calendar.date(byAdding: .day, value: offset, to: date("2026-11-17"))!
+            XCTAssertEqual(library.look(for: .rotation, on: day).name, oldPick(pool, on: day))
+        }
+    }
+
+    func testWithNothingCheckedTheOldRotationWasAllOfYourStyles() throws {
+        let library = try legacy(checked: [], builtIns: [])
+        XCTAssertEqual(library.rotationLooks.map(\.name), ["Coral", "Mint", "Sky"])
+        let day = date("2026-11-17")
+        XCTAssertEqual(library.rotationPick(on: day).name, oldPick(["Coral", "Mint", "Sky"], on: day))
+    }
+
+    func testAnOldLibraryChangesSmoothlyAfterTheUpdate() throws {
+        var library = try legacy(checked: [], builtIns: ["aurora"])
+        let day = date("2026-11-17")
+        let today = library.rotationPick(on: day).name
+        library.addToRotation(.builtIn(.marks), on: day)
+        XCTAssertEqual(library.rotationPick(on: day).name, today)
+    }
+
+    func testAnUnknownLookIsSkipped() throws {
+        let json = #"{"styles":[],"rotation":["aurora","sparkles","ember"],"anchor":{"day":9000,"index":1}}"#
+        let library = try JSONDecoder().decode(StyleLibrary.self, from: Data(json.utf8))
+        XCTAssertEqual(library.rotation, [.builtIn(.aurora), .builtIn(.ember)])
+    }
+
+    func testAStartingLibraryCanCarryTheOldFallback() {
+        XCTAssertTrue(StyleLibrary.starting().rotation.isEmpty)
+        let upgraded = StyleLibrary.starting(rotating: true)
+        XCTAssertEqual(upgraded.rotation, [.saved(StyleLibrary.firstStyleID)])
+        XCTAssertEqual(upgraded.rotationPick(on: date("2026-11-17")).name, "My Style")
     }
 
     // MARK: - Saved data
 
     func testTheLibrarySurvivesSaving() throws {
         var library = three
-        library.styles[1].inRotation = true
-        library.rotatingBuiltIns = [.ember]
+        library.addToRotation(.saved(library.styles[1].id))
+        library.addToRotation(.builtIn(.ember))
 
         let decoded = try JSONDecoder().decode(StyleLibrary.self, from: JSONEncoder().encode(library))
         XCTAssertEqual(decoded, library)
@@ -201,7 +363,6 @@ final class StyleLibraryTests: XCTestCase {
 
         XCTAssertEqual(decoded.id, StyleLibrary.firstStyleID)
         XCTAssertEqual(decoded.style.squares, RGBAColor(red: 1, green: 0, blue: 0))
-        XCTAssertFalse(decoded.inRotation)
         XCTAssertEqual(decoded.displayName, "Untitled")
     }
 }

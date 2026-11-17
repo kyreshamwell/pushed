@@ -44,6 +44,7 @@ struct PushedApp: App {
         }
 
         AppConfig.backfillTrackingStart()
+        AppConfig.settleStyleLibrary()
         TestScenario.expireIfNeeded()
 
         // Pretend data must never reach a public build, even one restored

@@ -64,11 +64,25 @@ final class AppConfigTests: XCTestCase {
     func testTheLibrarySurvivesBeingSaved() {
         var library = StyleLibrary.starting()
         library.add(named: "Mint")
-        library.styles[1].inRotation = true
-        library.rotatingBuiltIns = [.terminal]
+        library.addToRotation(.saved(library.styles[1].id))
+        library.addToRotation(.builtIn(.terminal))
         AppConfig.styleLibrary = library
 
         XCTAssertEqual(AppConfig.styleLibrary, library)
+    }
+
+    func testSomeoneConnectedBeforeKeepsTheOldRotationFallback() {
+        // 1.2 rotated through every saved style when nothing was checked, so
+        // a Daily Rotation widget showed My Style.
+        defaults.set("someone", forKey: AppConfig.usernameDefaultsKey)
+        XCTAssertEqual(AppConfig.styleLibrary.rotation, [.saved(StyleLibrary.firstStyleID)])
+    }
+
+    func testANewInstallStartsWithNothingInTheRotation() {
+        XCTAssertTrue(AppConfig.styleLibrary.rotation.isEmpty)
+        AppConfig.settleStyleLibrary()
+        defaults.set("someone", forKey: AppConfig.usernameDefaultsKey)
+        XCTAssertTrue(AppConfig.styleLibrary.rotation.isEmpty, "connecting later doesn't add My Style")
     }
 
     // MARK: - Rest days and missed days

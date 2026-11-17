@@ -29,9 +29,6 @@ struct CustomStyleEditor: View {
         Form {
             Section {
                 TextField("Name", text: $saved.name)
-                Toggle("In Daily Rotation", isOn: $saved.inRotation)
-            } footer: {
-                Text("Checked styles take turns in the Daily Rotation style, one a day. Check just one and it stays put.")
             }
 
             Section {

@@ -70,7 +70,7 @@ struct WidgetStyleGallery: View {
                     ForEach(library.styles) { saved in
                         card(WidgetLook(saved)) {
                             HStack {
-                                RotationCheck(isOn: saved.inRotation) {
+                                RotationCheck(isOn: library.isInRotation(saved.id)) {
                                     update { $0.toggleRotation(saved.id) }
                                 }
                                 Spacer()
@@ -93,7 +93,7 @@ struct WidgetStyleGallery: View {
                                 update { $0.duplicate(saved.id) }
                             }
                             .disabled(!library.canAdd)
-                            rotationButton(isOn: saved.inRotation) {
+                            rotationButton(isOn: library.isInRotation(saved.id)) {
                                 update { $0.toggleRotation(saved.id) }
                             }
                             Divider()

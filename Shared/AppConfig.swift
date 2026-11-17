@@ -35,9 +35,19 @@ enum AppConfig {
             }
             let earlier = sharedDefaults.data(forKey: customStyleKey)
                 .flatMap { try? JSONDecoder().decode(CustomWidgetStyle.self, from: $0) }
-            return .starting(with: earlier ?? .default)
+            // Someone who connected before 1.3 and never saved a style had a
+            // Daily Rotation of just My Style, so their widgets keep it.
+            let connected = !(sharedDefaults.string(forKey: usernameDefaultsKey) ?? "").isEmpty
+            return .starting(with: earlier ?? .default, rotating: connected)
         }
         set { sharedDefaults.set(try? JSONEncoder().encode(newValue), forKey: styleLibraryKey) }
+    }
+
+    /// Saves the library once if nothing is saved yet, so the rotation a
+    /// new install starts with doesn't change when it connects.
+    static func settleStyleLibrary() {
+        guard sharedDefaults.data(forKey: styleLibraryKey) == nil else { return }
+        styleLibrary = styleLibrary
     }
 
     static let dayOffMarkKey = "day-off-mark"

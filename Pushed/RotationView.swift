@@ -45,7 +45,7 @@ struct RotationView: View {
 
             Section {
                 ForEach(library.styles) { saved in
-                    checkRow(saved.displayName, isOn: saved.inRotation) {
+                    checkRow(saved.displayName, isOn: library.isInRotation(saved.id)) {
                         CustomStyleSwatch(style: saved.style)
                     } toggle: {
                         update { $0.toggleRotation(saved.id) }
@@ -121,13 +121,10 @@ struct RotationView: View {
     }
 
     private var statusNote: String {
-        if !library.hasCheckedStyles {
-            return "Nothing is checked, so all of your styles take turns. Check the ones you want, one a day, changing at midnight."
-        }
-        if library.rotation.count == 1 {
-            return "Only \(library.rotation[0].name) is checked, so it stays put. Check more to have them take turns."
-        }
-        return "\(library.rotation.count) styles take turns, one a day, changing at midnight."
+        let looks = library.rotationLooks
+        if looks.isEmpty { return "Nothing is in the rotation." }
+        if looks.count == 1 { return "\(looks[0].name) stays put." }
+        return "\(looks.count) styles take turns, one a day, changing at midnight."
     }
 
     /// A row with a check bubble: tapping anywhere on it checks or unchecks.
