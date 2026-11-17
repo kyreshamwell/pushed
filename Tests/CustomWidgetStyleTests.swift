@@ -211,6 +211,106 @@ final class CustomWidgetStyleTests: XCTestCase {
         XCTAssertTrue(WidgetStyle.ember.theme(for: .dark).ringsPending, "built-in styles ring it too")
     }
 
+    // MARK: - Cell mode
+
+    func testAStyleSavedBeforeCellModesDrawsSquares() throws {
+        let json = #"{"squares":{"red":1,"green":0,"blue":0,"opacity":1},"shape":"dot","glows":true}"#
+        let decoded = try JSONDecoder().decode(CustomWidgetStyle.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.cellMode, .squares)
+        XCTAssertEqual(decoded.shape, .dot, "the rest of the design is kept")
+
+        let unknown = #"{"cellMode":"sparkles"}"#
+        XCTAssertEqual(try JSONDecoder().decode(CustomWidgetStyle.self, from: Data(unknown.utf8)).cellMode, .squares)
+    }
+
+    func testMarksSurviveSavingAndReachTheTheme() throws {
+        var style = CustomWidgetStyle.default
+        style.cellMode = .marks
+        let decoded = try JSONDecoder().decode(CustomWidgetStyle.self, from: JSONEncoder().encode(style))
+        XCTAssertEqual(decoded, style)
+
+        let theme = style.theme
+        XCTAssertEqual(theme.cellMode, .marks)
+        XCTAssertEqual(RGBAColor(theme.markInk).hex, style.squares.hex, "every symbol in the squares color")
+        XCTAssertEqual(theme.monochrome.cellMode, .marks, "a tinted home screen keeps the symbols")
+        XCTAssertEqual(CustomWidgetStyle.default.theme.cellMode, .squares)
+    }
+
+    // MARK: - Starting from a built-in look
+
+    func testSeedingKeepsEachLooksShapeTypeAndGlow() {
+        let expected: [WidgetStyle: (CellShapeChoice, FontChoice, Bool, CellMode)] = [
+            .classic: (.soft, .standard, false, .squares),
+            .aurora: (.rounded, .standard, true, .squares),
+            .ember: (.rounded, .standard, true, .squares),
+            .terminal: (.square, .monospaced, false, .squares),
+            .paper: (.dot, .serif, false, .squares),
+            .marks: (.soft, .standard, false, .marks),
+        ]
+        XCTAssertEqual(Set(expected.keys), Set(WidgetStyle.builtIn), "every built-in look has a starting point")
+        for (look, (shape, font, glows, mode)) in expected {
+            let seeded = CustomWidgetStyle.seeded(from: look)
+            XCTAssertEqual(seeded.shape, shape, "\(look)")
+            XCTAssertEqual(seeded.font, font, "\(look)")
+            XCTAssertEqual(seeded.glows, glows, "\(look)")
+            XCTAssertEqual(seeded.cellMode, mode, "\(look)")
+            XCTAssertEqual(seeded.weight, .bold, "\(look)")
+            XCTAssertFalse(seeded.minimal)
+            XCTAssertNil(seeded.missedSquares)
+        }
+    }
+
+    func testSeedingTakesEachLooksColors() {
+        let classic = CustomWidgetStyle.seeded(from: .classic)
+        XCTAssertEqual(classic.background, RGBAColor(hex: 0x0D1117))
+        XCTAssertFalse(classic.usesGradient)
+        XCTAssertEqual(classic.squares, RGBAColor(hex: 0x39D353))
+        XCTAssertEqual(classic.emptySquares, RGBAColor(hex: 0x161B22))
+
+        let paper = CustomWidgetStyle.seeded(from: .paper)
+        XCTAssertEqual(paper.background, RGBAColor(hex: 0xF7F2E8))
+        XCTAssertEqual(paper.backgroundEnd, RGBAColor(hex: 0xEDE5D6))
+        XCTAssertTrue(paper.usesGradient)
+        XCTAssertEqual(paper.squares, RGBAColor(hex: 0x24211D))
+
+        let marks = CustomWidgetStyle.seeded(from: .marks)
+        XCTAssertEqual(marks.squares, RGBAColor(hex: 0xF2F2F2), "the ink")
+        XCTAssertEqual(marks.background, RGBAColor(hex: 0x111113))
+
+        XCTAssertEqual(CustomWidgetStyle.seeded(from: .custom), .default)
+    }
+
+    func testEverySeededLookIsReadableAndKeepsItsLightOrDark() {
+        for look in WidgetStyle.builtIn {
+            let seeded = CustomWidgetStyle.seeded(from: look)
+            XCTAssertTrue(seeded.squaresStandOut, "\(look)")
+            let expected = look.pinnedColorScheme() ?? .dark
+            XCTAssertEqual(WidgetStyle.custom.pinnedColorScheme(custom: seeded), expected, "\(look)")
+            // Empty days keep the look's own color, even where that's
+            // fainter than the editor's own warning line, as GitHub's is.
+            let empty = look.theme(for: expected).levels[0]
+            XCTAssertEqual(seeded.emptySquares.map(\.hex), RGBAColor(empty).hex, "\(look)")
+        }
+    }
+
+    func testASeededLookSurvivesSaving() throws {
+        for look in WidgetStyle.builtIn {
+            let seeded = CustomWidgetStyle.seeded(from: look)
+            XCTAssertEqual(try JSONDecoder().decode(CustomWidgetStyle.self, from: JSONEncoder().encode(seeded)), seeded, "\(look)")
+        }
+    }
+
+    func testTheSoftSquareHasAFloorUnderItsCorners() {
+        XCTAssertEqual(CellShapeChoice.soft.cornerFraction, 0.18)
+        XCTAssertEqual(CellShapeChoice.soft.minimumCorner, 2)
+        XCTAssertEqual(CellShape.radius(side: 8, cornerFraction: 0.18, minimumCorner: 2), 2, "small cells keep 2pt")
+        XCTAssertEqual(CellShape.radius(side: 40, cornerFraction: 0.18, minimumCorner: 2), 7.2, accuracy: 0.001)
+        XCTAssertEqual(CellShape.radius(side: 3, cornerFraction: 0.18, minimumCorner: 2), 1.5, "never past round")
+        for shape in CellShapeChoice.allCases where shape != .soft {
+            XCTAssertEqual(shape.minimumCorner, 0, "\(shape) is as it was")
+        }
+    }
+
     func testChoicesMapToTheirShapeAndType() {
         XCTAssertEqual(CellShapeChoice.square.cornerFraction, 0)
         XCTAssertEqual(CellShapeChoice.dot.cornerFraction, 0.5)
@@ -223,5 +323,14 @@ final class CustomWidgetStyleTests: XCTestCase {
         XCTAssertEqual(theme.cornerFraction, 0.5)
         XCTAssertEqual(theme.fontDesign, .serif)
         XCTAssertEqual(theme.levels.count, 5)
+    }
+}
+
+extension RGBAColor {
+    /// Components to the nearest 8 bits, so colors that went through
+    /// SwiftUI compare equal to the hex they were made from. Opacity too.
+    var hex: UInt64 {
+        func byte(_ value: Double) -> UInt64 { UInt64(max(0, min(255, (value * 255).rounded()))) }
+        return byte(red) << 24 | byte(green) << 16 | byte(blue) << 8 | byte(opacity)
     }
 }

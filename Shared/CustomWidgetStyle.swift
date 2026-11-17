@@ -28,6 +28,10 @@ struct CustomWidgetStyle: Codable, Equatable, Sendable {
     var minimal = false
     /// How heavy the big number is.
     var weight: WeightChoice = .bold
+    /// Squares shaded by how busy each day was, or the Marks symbols (a dot,
+    /// ×, F or R) drawn in the squares color. Styles saved before there was
+    /// a choice are squares.
+    var cellMode: CellMode = .squares
 
     /// Where a new custom style starts: coral squares on a midnight gradient,
     /// a look none of the built-in styles cover.
@@ -268,8 +272,70 @@ extension CustomWidgetStyle {
             fontWidth: font.width,
             numberWeight: weight.weight,
             freeze: freezeColor,
-            missed: missedSquares?.color
+            missed: missedSquares?.color,
+            cellMode: cellMode,
+            // Marks draws every symbol in the squares color, so picking one
+            // color recolors the whole graph.
+            ink: fill
         )
+    }
+}
+
+// MARK: - Starting from a built-in look
+
+extension CustomWidgetStyle {
+    /// The closest custom style to a built-in look: where customizing one
+    /// starts, so the first edit changes one thing and not everything.
+    ///
+    /// A custom style has one square color stepped up in brightness, one
+    /// linear backdrop and one typeface, so some looks can only be
+    /// approximated: Aurora's teal-to-violet squares settle on its teal,
+    /// its corner glows become a gradient, Terminal loses its scanlines and
+    /// Paper's serif covers the words as well as the number.
+    static func seeded(from style: WidgetStyle) -> CustomWidgetStyle {
+        switch style {
+        case .classic, .rotation:
+            // A custom style can't follow light and dark, so Classic starts
+            // from GitHub's dark graph.
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x0D1117), backgroundEnd: RGBAColor(hex: 0x0D1117), usesGradient: false,
+                squares: RGBAColor(hex: 0x39D353), shape: .soft, font: .standard, glows: false,
+                emptySquares: RGBAColor(hex: 0x161B22)
+            )
+        case .aurora:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x0F2D3B), backgroundEnd: RGBAColor(hex: 0x252448), usesGradient: true,
+                squares: RGBAColor(hex: 0x6EE7D8), shape: .rounded, font: .standard, glows: true,
+                emptySquares: RGBAColor(red: 1, green: 1, blue: 1, opacity: 0.08)
+            )
+        case .ember:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x2E140A), backgroundEnd: RGBAColor(hex: 0x140B08), usesGradient: true,
+                squares: RGBAColor(hex: 0xF2761B), shape: .rounded, font: .standard, glows: true,
+                emptySquares: RGBAColor(hex: 0x2A1A14)
+            )
+        case .terminal:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x0B1A10), backgroundEnd: RGBAColor(hex: 0x030604), usesGradient: true,
+                squares: RGBAColor(hex: 0x22C55E), shape: .square, font: .monospaced, glows: false,
+                emptySquares: RGBAColor(hex: 0x0E1A12)
+            )
+        case .paper:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0xF7F2E8), backgroundEnd: RGBAColor(hex: 0xEDE5D6), usesGradient: true,
+                squares: RGBAColor(hex: 0x24211D), shape: .dot, font: .serif, glows: false,
+                emptySquares: RGBAColor(hex: 0xE2DACB)
+            )
+        case .marks:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x111113), backgroundEnd: RGBAColor(hex: 0x111113), usesGradient: false,
+                squares: RGBAColor(hex: 0xF2F2F2), shape: .soft, font: .standard, glows: false,
+                emptySquares: RGBAColor(red: 1, green: 1, blue: 1, opacity: 0.045),
+                cellMode: .marks
+            )
+        case .custom:
+            .default
+        }
     }
 }
 
@@ -278,7 +344,7 @@ extension CustomWidgetStyle {
 extension CustomWidgetStyle {
     private enum CodingKeys: String, CodingKey {
         case background, backgroundEnd, usesGradient, squares, shape, font, glows
-        case emptySquares, missedSquares, spacing, minimal, weight
+        case emptySquares, missedSquares, spacing, minimal, weight, cellMode
     }
 
     /// A field that's missing or unreadable (one added in a later version, or
@@ -302,6 +368,7 @@ extension CustomWidgetStyle {
         spacing = value(.spacing, fallback.spacing)
         minimal = value(.minimal, fallback.minimal)
         weight = value(.weight, fallback.weight)
+        cellMode = value(.cellMode, fallback.cellMode)
     }
 }
 
