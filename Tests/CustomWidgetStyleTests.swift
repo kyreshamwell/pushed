@@ -334,3 +334,53 @@ extension RGBAColor {
         return byte(red) << 24 | byte(green) << 16 | byte(blue) << 8 | byte(opacity)
     }
 }
+
+// MARK: - The number's color
+
+extension CustomWidgetStyleTests {
+    func testAStyleSavedBeforeTheNumberColorChoiceKeepsItsSquareColorNumber() throws {
+        let json = #"{"background":{"red":0.043,"green":0.063,"blue":0.149,"opacity":1},"usesGradient":false,"squares":{"red":1,"green":0.478,"blue":0.349,"opacity":1}}"#
+        let decoded = try JSONDecoder().decode(CustomWidgetStyle.self, from: Data(json.utf8))
+
+        XCTAssertFalse(decoded.numberUsesTextColor)
+        XCTAssertTrue(decoded.squaresStandOut)
+        XCTAssertEqual(RGBAColor(decoded.numberColor).hex, decoded.squares.hex, "drawn exactly as before")
+    }
+
+    func testTheNumberColorChoiceSurvivesSaving() throws {
+        var style = CustomWidgetStyle.default
+        style.numberUsesTextColor = true
+        let decoded = try JSONDecoder().decode(CustomWidgetStyle.self, from: JSONEncoder().encode(style))
+        XCTAssertEqual(decoded, style)
+        XCTAssertEqual(RGBAColor(decoded.numberColor).hex, RGBAColor.white.hex)
+    }
+
+    func testEachSeededLookDrawsItsNumberLikeTheBuiltInLook() {
+        // Classic, Terminal, Paper and Marks draw the number in the text color.
+        // Aurora's and Ember's gradients come closest as the square color.
+        let usesText: [WidgetStyle: Bool] = [
+            .classic: true, .aurora: false, .ember: false, .terminal: true, .paper: true, .marks: true,
+        ]
+        XCTAssertEqual(Set(usesText.keys), Set(WidgetStyle.builtIn))
+        for (look, text) in usesText {
+            let seeded = CustomWidgetStyle.seeded(from: look)
+            XCTAssertEqual(seeded.numberUsesTextColor, text, "\(look)")
+            let expected = text ? (seeded.usesLightText ? RGBAColor.white : .ink) : seeded.squares
+            XCTAssertEqual(RGBAColor(seeded.numberColor).hex, expected.hex, "\(look)")
+        }
+        XCTAssertNotEqual(
+            RGBAColor(CustomWidgetStyle.seeded(from: .classic).numberColor).hex, RGBAColor(hex: 0x39D353).hex,
+            "a seeded Classic's number isn't green"
+        )
+    }
+
+    func testRecoloringASeededLookLeavesItsNumberAlone() {
+        var marks = CustomWidgetStyle.seeded(from: .marks)
+        marks.squares = RGBAColor(hex: 0xF472B6)
+        XCTAssertEqual(RGBAColor(marks.numberColor).hex, RGBAColor.white.hex)
+
+        var aurora = CustomWidgetStyle.seeded(from: .aurora)
+        aurora.squares = RGBAColor(hex: 0xF472B6)
+        XCTAssertEqual(RGBAColor(aurora.numberColor).hex, aurora.squares.hex)
+    }
+}
