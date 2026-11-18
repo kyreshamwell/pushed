@@ -239,22 +239,23 @@ struct StylesView: View {
         .tint(.pushedGreen)
     }
 
-    /// One look in the grid: the small widget wearing it, its name, and the
+    /// One look in the grid: the medium widget wearing it, shrunk to a card, its name, and the
     /// rotation circle. The look on show gets a ring instead of a checkmark.
     private func lookTile(_ id: LookID, look: WidgetLook) -> some View {
         let inRotation = store.library.isInRotation(id)
         let isOn = selection == id
         return VStack(spacing: 8) {
             GeometryReader { geo in
-                ScaledWidget(look: look, family: .systemSmall,
-                             scale: geo.size.width / WidgetPreviewCard.size(for: .systemSmall).width, data: data)
+                ScaledWidget(look: look, family: .systemMedium,
+                             scale: geo.size.width / WidgetPreviewCard.size(for: .systemMedium).width, data: data)
             }
-            .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            // The medium widget, shrunk: a long card, like the cards in Apple Pay.
+            .aspectRatio(WidgetPreviewCard.size(for: .systemMedium).width / WidgetPreviewCard.size(for: .systemMedium).height, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
                     .strokeBorder(isOn ? Color.pushedGreen : .clear, lineWidth: 2.5)
-                    .padding(-5)
+                    .padding(-4)
             }
             HStack(spacing: 4) {
                 Text(look.name)
@@ -286,12 +287,12 @@ struct StylesView: View {
             showsAllLooks = false
         } label: {
             VStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(Color(uiColor: .separator), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
-                    .aspectRatio(1, contentMode: .fit)
+                    .aspectRatio(WidgetPreviewCard.size(for: .systemMedium).width / WidgetPreviewCard.size(for: .systemMedium).height, contentMode: .fit)
                     .overlay {
                         Image(systemName: "plus")
-                            .font(.system(size: 26, weight: .semibold))
+                            .font(.system(size: 20, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
                 Text("New Look")
