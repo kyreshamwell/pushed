@@ -60,7 +60,7 @@ struct StylesView: View {
             // edge; keep the preview (300pt) and a little air above the sheet.
             proxy.size.height + proxy.safeAreaInsets.bottom - Self.previewHeight - 12
         } action: { sheetRoom = max($0, 320) }
-        .onChange(of: customizing != nil) { _, open in
+        .onChange(of: customizing != nil || showsAllLooks) { _, open in
             if open { withAnimation(.snappy) { proxy.scrollTo("preview", anchor: .top) } }
         }
         }
@@ -210,7 +210,7 @@ struct StylesView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 8)
-                Text("The circle adds a look to your rotation.")
+                Text("Tap a look to check it. Checked looks take turns on your widget.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.top, 14)
@@ -234,7 +234,11 @@ struct StylesView: View {
                 Text("Widgets using it switch to your first saved look.")
             }
         }
-        .presentationDetents([.medium, .large])
+        // Like Customize: it stops short of the preview, scrolls inside, and
+        // leaves the preview undimmed so each look you tap shows above.
+        .presentationDetents([.height(sheetRoom), .large])
+        .presentationContentInteraction(.scrolls)
+        .presentationBackgroundInteraction(.enabled(upThrough: .height(sheetRoom)))
         .presentationDragIndicator(.visible)
         .tint(.pushedGreen)
     }
@@ -263,21 +267,18 @@ struct StylesView: View {
                     .foregroundStyle(isOn ? Color.primary : Color.secondary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                Button { toggleRotation(id, keepSelection: true) } label: {
-                    RotationCircle(isOn: inRotation)
-                        .frame(width: 44, height: 36)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .padding(.trailing, -10)
-                .accessibilityLabel(inRotation ? "Remove \(look.name) from rotation" : "Add \(look.name) to rotation")
+                RotationCircle(isOn: inRotation)
+                    .frame(height: 36)
             }
-            .padding(.leading, 4)
+            .padding(.horizontal, 4)
         }
         .contentShape(Rectangle())
-        .onTapGesture { pickLook(id) }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Show \(look.name)")
+        // Tapping a look checks it (or unchecks it) and shows it in the
+        // preview above, and the sheet stays open to keep going.
+        .onTapGesture { toggleRotation(id) }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(look.name)
+        .accessibilityValue(inRotation ? "In rotation" : "Not in rotation")
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 
@@ -324,11 +325,6 @@ struct StylesView: View {
         }
     }
 
-    private func pickLook(_ id: LookID) {
-        withAnimation(.easeOut(duration: 0.2)) { selection = id }
-        showsAllLooks = false
-    }
-
     private func rotationButton(_ id: LookID) -> some View {
         let isOn = store.library.isInRotation(id)
         return Button(
@@ -372,7 +368,7 @@ struct StylesView: View {
                 }
             }
             if schedule.isEmpty {
-                Text("Tap the circle on a look to add it.")
+                Text("Open Look and tap the looks you want to rotate.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .transition(.opacity)
