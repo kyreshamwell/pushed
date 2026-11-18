@@ -247,7 +247,9 @@ struct StylesView: View {
     /// rotation circle. The look on show gets a ring instead of a checkmark.
     private func lookTile(_ id: LookID, look: WidgetLook) -> some View {
         let inRotation = store.library.isInRotation(id)
-        let isOn = selection == id
+        // The green outline and bold name mean "checked", so unchecking a
+        // look clears both, even while it's the one in the preview.
+        let isOn = inRotation
         return VStack(spacing: 8) {
             GeometryReader { geo in
                 ScaledWidget(look: look, family: .systemMedium,
