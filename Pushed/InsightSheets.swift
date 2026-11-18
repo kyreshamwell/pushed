@@ -39,6 +39,10 @@ private enum InsightColors {
         level >= 3 ? dynamic(dark: 0x04150A, light: 0xFFFFFF) : dynamic(dark: 0xE6EDF3, light: 0x0A3D1A)
     }
 
+    /// Fixed rather than the system's grouped colors, which lift a sheet a
+    /// shade in dark mode and would wash out the cards on it.
+    static let sheet = dynamic(dark: 0x1C1C1E, light: 0xFFFFFF)
+    static let tile = dynamic(dark: 0x2C2C2E, light: 0xF2F2F7)
     /// A day with nothing on it, sitting on a raised card.
     static let quietDay = dynamic(dark: 0x232326, light: 0xFFFFFF)
     static let rest = dynamic(dark: 0x3A3A3C, light: 0xD1D1D6)
@@ -81,7 +85,7 @@ private struct InsightSheetFrame<Content: View>: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(28)
-        .presentationBackground(Color.card)
+        .presentationBackground(InsightColors.sheet)
         .tint(.pushedGreen)
     }
 }
@@ -131,7 +135,7 @@ private struct InsightTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(InsightColors.tile, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
@@ -153,7 +157,7 @@ private struct ProgressRow: View {
             .font(.footnote)
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.raised)
+                    Capsule().fill(InsightColors.tile)
                     Capsule()
                         .fill(Color.pushedGreen)
                         .frame(width: geometry.size.width * shown)
@@ -198,7 +202,7 @@ private struct StreakMonthView: View {
             }
         }
         .padding(compact ? 12 : 14)
-        .background(Color.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(InsightColors.tile, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var cellHeight: CGFloat { compact ? 24 : 38 }
@@ -344,7 +348,7 @@ struct CurrentStreakSheet: View {
                     .font(.footnote.weight(.semibold))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(Color.raised, in: Capsule())
+                    .background(InsightColors.tile, in: Capsule())
             }
         }
         .frame(maxWidth: .infinity)
@@ -462,7 +466,7 @@ struct YearSheet: View {
                 }
             }
             .padding(2)
-            .background(Color.raised, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(InsightColors.tile, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -473,7 +477,7 @@ struct YearSheet: View {
                     }
                     .padding(2)
                 }
-                .background(Color.raised, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .background(InsightColors.tile, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .onAppear { proxy.scrollTo(selectedYear, anchor: .trailing) }
             }
         }
@@ -600,7 +604,7 @@ struct YearSheet: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(Color.raised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(InsightColors.tile, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .opacity(month.isFuture ? 0.4 : 1)
     }
