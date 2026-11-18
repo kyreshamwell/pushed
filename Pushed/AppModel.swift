@@ -230,6 +230,7 @@ final class AppModel {
         AppConfig.sharedDefaults.removeObject(forKey: ContributionSnapshot.defaultsKey)
         AppConfig.resetNotificationState()
         AppConfig.forgetAccountHistory()
+        YearHistoryCache.shared.removeAll()
         protection = AppConfig.streakProtection
         username = ""
         token = ""

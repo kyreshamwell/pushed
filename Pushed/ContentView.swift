@@ -64,6 +64,7 @@ struct HomeView: View {
     @Environment(StyleLibraryStore.self) private var store
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var insight: Insight?
 
     var body: some View {
         GeometryReader { geometry in
@@ -97,6 +98,39 @@ struct HomeView: View {
         .navigationTitle("Home")
         .toolbar(.hidden, for: .navigationBar)
         .animation(.snappy, value: model.history?.today)
+        .sheet(item: $insight) { insight in
+            insightSheet(insight)
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: insight) { _, opened in opened != nil }
+    }
+
+    @ViewBuilder
+    private func insightSheet(_ insight: Insight) -> some View {
+        if let history = model.history {
+            switch insight {
+            case .current:
+                CurrentStreakSheet(history: history, counts: model.shownSnapshot?.recentCounts)
+            case .best:
+                BestStreakSheet(history: history)
+            case .year:
+                YearSheet(model: YearHistoryModel(
+                    username: model.username,
+                    token: model.token,
+                    // The real data, even during a test: tests change the
+                    // streak, not what was pushed over the year.
+                    snapshot: model.snapshot,
+                    isDemo: isDemo
+                ))
+            }
+        }
+    }
+
+    private var isDemo: Bool {
+        #if DEBUG
+        DemoMode.isRequested
+        #else
+        false
+        #endif
     }
 
     private var header: some View {
@@ -219,11 +253,22 @@ struct HomeView: View {
         // sizes, so there they stack.
         let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 10))
         return layout {
-            StatTile(value: history.streak, label: "Current streak")
-            StatTile(value: history.bestStreak, label: "Best streak")
-            StatTile(value: snapshot.totalContributions, label: "This year")
+            statButton(.current, value: history.streak, label: "Current streak")
+            statButton(.best, value: history.bestStreak, label: "Best streak")
+            statButton(.year, value: snapshot.totalContributions, label: "This year")
         }
         .padding(.horizontal, 16)
+    }
+
+    private func statButton(_ kind: Insight, value: Int, label: String) -> some View {
+        Button {
+            insight = kind
+        } label: {
+            StatTile(value: value, label: label)
+                .foregroundStyle(Color.primary)
+        }
+        .buttonStyle(PressableStyle())
+        .accessibilityHint("Shows the details")
     }
 
     // MARK: - Styles

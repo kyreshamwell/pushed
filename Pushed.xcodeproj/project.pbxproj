@@ -56,6 +56,7 @@
 		6721AB2CC9045B7D1227D5BC /* WidgetOptionsIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 160810259FC8A024A879E04B /* WidgetOptionsIntent.swift */; };
 		6C394A25FE3C5D7965447F31 /* DemoMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5921B643B6E6718C671B3F23 /* DemoMode.swift */; };
 		6F3D56B11E3A54D3EA8CDA6F /* DayGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C157E4CD9986861B07231A91 /* DayGrid.swift */; };
+		73FDFCEBF0F0354EA5F07028 /* YearHistoryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53158C51DBE72DE673BF4422 /* YearHistoryModel.swift */; };
 		78C8D99735E2970EB8018E0D /* NotificationPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664C4B7FBA91D5C599AF285C /* NotificationPlanner.swift */; };
 		7CBCC02BD196332C4D2603B5 /* YearHistoryCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50FAF11679CED67E7D17D6F4 /* YearHistoryCache.swift */; };
 		7F7AC2CFCE27559F7FF757C7 /* StreakHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1972243E57FD75928BDB3F /* StreakHistory.swift */; };
@@ -96,6 +97,7 @@
 		BF53E5D80750D8E1BA4371D1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 621F674DC7CA93253B2F6E7F /* PrivacyInfo.xcprivacy */; };
 		C403A9CA3FC4B44A212078F4 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB3DEFB8B77FC966431D7EC /* AppConfigTests.swift */; };
 		C47C858B7694044E8ABD2F94 /* StreakProtectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F72366EB0030B9C0E3969A8C /* StreakProtectionTests.swift */; };
+		C9BC8372EB55BDC37BECD2B0 /* InsightSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031FCA1A5485593B0A17D668 /* InsightSheets.swift */; };
 		CB9FF82438EAC3D88FB01CDD /* StyleLibraryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A3B965D48BDDB107AD9BEB6 /* StyleLibraryStoreTests.swift */; };
 		CFE6B6CC29B6C174006D8D81 /* CustomWidgetStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01686006985EB29F6E040356 /* CustomWidgetStyle.swift */; };
 		D0D76E42E5D798E6C5A25889 /* HomeWordsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB76EC1E67190A1A7E033268 /* HomeWordsTests.swift */; };
@@ -149,6 +151,7 @@
 /* Begin PBXFileReference section */
 		0060EEE3E0F0F7A5137B5B05 /* PushedWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushedWidgetView.swift; sourceTree = "<group>"; };
 		01686006985EB29F6E040356 /* CustomWidgetStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWidgetStyle.swift; sourceTree = "<group>"; };
+		031FCA1A5485593B0A17D668 /* InsightSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightSheets.swift; sourceTree = "<group>"; };
 		0A84DCF1096569A79BF32B6F /* Pushed.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Pushed.entitlements; sourceTree = "<group>"; };
 		0B082ED41F40B9E4249666E6 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
 		0F9A7CE8FCDB1FA9FBFF67FE /* StyleLibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleLibraryStore.swift; sourceTree = "<group>"; };
@@ -167,6 +170,7 @@
 		50FAF11679CED67E7D17D6F4 /* YearHistoryCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearHistoryCache.swift; sourceTree = "<group>"; };
 		518E378FDF8CFFC9069799E3 /* TestScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestScenario.swift; sourceTree = "<group>"; };
 		524AD059E4EF57B66E6665DA /* GraphLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphLayout.swift; sourceTree = "<group>"; };
+		53158C51DBE72DE673BF4422 /* YearHistoryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearHistoryModel.swift; sourceTree = "<group>"; };
 		5434003CD77A13E1BB2B14D6 /* StreakIconPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakIconPicker.swift; sourceTree = "<group>"; };
 		5921B643B6E6718C671B3F23 /* DemoMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoMode.swift; sourceTree = "<group>"; };
 		5DFF3012874A2F6D0A471656 /* PushedWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushedWidget.swift; sourceTree = "<group>"; };
@@ -227,6 +231,7 @@
 				F63CD5B341CE733A2D8554D9 /* CustomizeSheet.swift */,
 				65C90674B989E8A692A52344 /* DebugNotificationsView.swift */,
 				32EF47F729BCDAC67059B748 /* Info.plist */,
+				031FCA1A5485593B0A17D668 /* InsightSheets.swift */,
 				3583726A6506620AA4F3FB73 /* OnboardingView.swift */,
 				621F674DC7CA93253B2F6E7F /* PrivacyInfo.xcprivacy */,
 				0A84DCF1096569A79BF32B6F /* Pushed.entitlements */,
@@ -236,6 +241,7 @@
 				CEF021E828258FA09AE3DC9D /* SettingsView.swift */,
 				5434003CD77A13E1BB2B14D6 /* StreakIconPicker.swift */,
 				87E8E04324C8DE85C0FA1A88 /* StylesView.swift */,
+				53158C51DBE72DE673BF4422 /* YearHistoryModel.swift */,
 			);
 			path = Pushed;
 			sourceTree = "<group>";
@@ -521,6 +527,7 @@
 				82A64652E3159D82E7357E26 /* GitHubContributionsService.swift in Sources */,
 				B144B0C2905398282476CACE /* GraphLayout.swift in Sources */,
 				AE22433A021025650B07B7F2 /* HomeWords.swift in Sources */,
+				C9BC8372EB55BDC37BECD2B0 /* InsightSheets.swift in Sources */,
 				240C40E9A8A110824C24CE2A /* KeychainHelper.swift in Sources */,
 				0F8F12E58D8E78FC327C94FA /* LockScreenView.swift in Sources */,
 				78C8D99735E2970EB8018E0D /* NotificationPlanner.swift in Sources */,
@@ -543,6 +550,7 @@
 				59686A95603E106D39EE4FFA /* TestScenario.swift in Sources */,
 				A0245DF802543A5DFFFDF61E /* WidgetStyle.swift in Sources */,
 				9F845F5A1249191F579B0A5D /* YearHistoryCache.swift in Sources */,
+				73FDFCEBF0F0354EA5F07028 /* YearHistoryModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
