@@ -9,13 +9,16 @@ Inputs come from two places:
                     -only-testing:PushedTests/RenderPreviews/testRenderStoreWidgets ...
             writes them to <dir>/store.
   captures  Simulator screenshots of the demo build (-PushedDemo) on an
-            iPhone 17 Pro Max with the status bar set to 9:41:
-                main.png, rotation.png, editor.png
+            iPhone 17 Pro Max in dark mode with the status bar set to 9:41:
+                1.3: home.png (Home), styles.png (Styles, with the rotation
+                     strip showing), customize.png (the Customize sheet)
+                1.2: main.png, rotation.png, editor.png
 
 Usage:
-    python3 Scripts/compose_screenshots.py WIDGETS CAPTURES OUT
+    python3 Scripts/compose_screenshots.py WIDGETS CAPTURES OUT [1.3|1.2]
 
-Needs Pillow and the San Francisco fonts that ship with macOS.
+The set defaults to 1.3. Needs Pillow and the San Francisco fonts that ship
+with macOS.
 """
 import os
 import sys
@@ -111,31 +114,185 @@ def vibrant(im):
     return white
 
 
-def main(widgets, captures, out):
-    os.makedirs(out, exist_ok=True)
+def stack(img, top, items, gap):
+    """Centers rows of sprites in the space below `top`, each row centered too."""
+    total = sum(row[0].height for row in items) + gap * (len(items) - 1)
+    y = top + (H - top - total) / 2
+    for sprites in items:
+        row_width = sum(s.width for s in sprites) + gap * (len(sprites) - 1)
+        x = (W - row_width) / 2
+        for s in sprites:
+            shadowed(img, s, x, y)
+            x += s.width + gap
+        y += sprites[0].height + gap
+    return y - gap
 
-    def widget(name, width):
-        im = Image.open(os.path.join(widgets, f"{name}.png")).convert("RGBA")
+
+class Sources:
+    """Loads widget cards and captures, and saves finished images."""
+
+    def __init__(self, widgets, captures, out):
+        self.widgets, self.captures, self.out = widgets, captures, out
+        os.makedirs(out, exist_ok=True)
+
+    def widget(self, name, width):
+        im = Image.open(os.path.join(self.widgets, f"{name}.png")).convert("RGBA")
         return im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
 
-    def capture(name):
-        return Image.open(os.path.join(captures, f"{name}.png"))
+    def capture(self, name):
+        return Image.open(os.path.join(self.captures, f"{name}.png"))
 
-    def save(img, name):
-        img.convert("RGB").save(os.path.join(out, f"{name}.png"), optimize=True)
+    def save(self, img, name):
+        img.convert("RGB").save(os.path.join(self.out, f"{name}.png"), optimize=True)
         print("saved", name)
 
-    def stack(img, top, items, gap):
-        """Centers a column of (sprite, x offset) rows in the space below `top`."""
-        total = sum(row[0].height for row in items) + gap * (len(items) - 1)
-        y = top + (H - top - total) / 2
-        for sprites in items:
-            row_width = sum(s.width for s in sprites) + gap * (len(sprites) - 1)
-            x = (W - row_width) / 2
-            for s in sprites:
-                shadowed(img, s, x, y)
-                x += s.width + gap
-            y += sprites[0].height + gap
+
+# 1.3: darker, with one soft glow in the colors of the look on show, a
+# lighter headline weight and a slimmer phone.
+
+INK = (255, 255, 255)
+SOFT = (168, 168, 176)
+
+
+def headline_13(img, title, subtitle, y=210):
+    """Centered title and subtitle. Returns the y just below them."""
+    d = ImageDraw.Draw(img)
+    tf = font(122, "Bold")
+    for line in title.split("\n"):
+        w = d.textlength(line, font=tf)
+        assert w <= W - 120, f"title too wide: {line}"
+        d.text(((W - w) / 2, y), line, font=tf, fill=INK)
+        y += 140
+    sf = font(50, "Regular")
+    y += 34
+    for line in subtitle.split("\n"):
+        w = d.textlength(line, font=sf)
+        assert w <= W - 120, f"subtitle too wide: {line}"
+        d.text(((W - w) / 2, y), line, font=sf, fill=SOFT)
+        y += 66
+    return y
+
+
+def phone_13(screen, width):
+    """A screen in a slim iPhone frame: a thin bezel inside a brushed rim."""
+    rim, bezel = 7, 18
+    inset = rim + bezel
+    sw = width - inset * 2
+    sh = round(screen.height * sw / screen.width)
+    screen = screen.convert("RGBA").resize((sw, sh), Image.LANCZOS)
+    radius = int(sw * 0.128)
+    fh = sh + inset * 2
+    outer = radius + inset
+    # The rim: light at the top, darker toward the bottom, like metal.
+    line = Image.new("RGB", (1, 256))
+    for y in range(256):
+        k = y / 255
+        line.putpixel((0, y), tuple(int(a + (b - a) * k) for a, b in zip((112, 112, 120), (44, 44, 50))))
+    metal = line.resize((width, fh), Image.BICUBIC).convert("RGBA")
+    shape = Image.new("L", (width, fh), 0)
+    ImageDraw.Draw(shape).rounded_rectangle((0, 0, width - 1, fh - 1), outer, fill=255)
+    frame = Image.new("RGBA", (width, fh), (0, 0, 0, 0))
+    frame.paste(metal, (0, 0), shape)
+    ImageDraw.Draw(frame).rounded_rectangle(
+        (rim, rim, width - 1 - rim, fh - 1 - rim), outer - rim, fill=(6, 6, 8, 255)
+    )
+    mask = Image.new("L", (sw, sh), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, sw - 1, sh - 1), radius, fill=255)
+    frame.paste(screen, (inset, inset), mask)
+    return frame
+
+
+def marks_legend(img, y):
+    """The Marks symbols with what each one means, as in the Marks board."""
+    items = [("dot", "Pushed"), ("x", "Missed"), ("F", "Freeze"), ("R", "Rest day"), ("today", "Today")]
+    d = ImageDraw.Draw(img)
+    col, tile = 236, 100
+    x0 = (W - col * len(items)) / 2
+    label = font(40, "Medium")
+    letter = font(54, "Bold")
+    for i, (kind, text) in enumerate(items):
+        cx = x0 + col * i + col / 2
+        box = (cx - tile / 2, y, cx + tile / 2, y + tile)
+        d.rounded_rectangle(box, 20, fill=(30, 30, 33))
+        mx, my = cx, y + tile / 2
+        if kind in ("dot", "today"):
+            d.ellipse((mx - 21, my - 21, mx + 21, my + 21), fill=(242, 242, 242))
+        if kind == "today":
+            d.rounded_rectangle((box[0] - 9, box[1] - 9, box[2] + 9, box[3] + 9), 27, outline=(242, 242, 242), width=6)
+        if kind == "x":
+            for a, b in (((-17, -17), (17, 17)), ((-17, 17), (17, -17))):
+                d.line((mx + a[0], my + a[1], mx + b[0], my + b[1]), fill=(142, 142, 147), width=7)
+        if kind in ("F", "R"):
+            color = (174, 174, 178) if kind == "F" else (142, 142, 147)
+            w = d.textlength(kind, font=letter)
+            d.text((mx - w / 2, my - 33), kind, font=letter, fill=color)
+        w = d.textlength(text, font=label)
+        d.text((cx - w / 2, y + tile + 34), text, font=label, fill=(206, 206, 212))
+    return y + tile + 34 + 48
+
+
+def layout_13(src):
+    dark = (0x0D0D12, 0x040405)
+
+    def phone_page(name, glows, title, subtitle, capture):
+        img = background(*dark, glows)
+        top = headline_13(img, title, subtitle)
+        p = phone_13(src.capture(capture), 1010)
+        shadowed(img, p, (W - p.width) / 2, top + 64, blur=60, opacity=190, offset=30)
+        src.save(img, name)
+
+    # 1. Hero: the widgets, big and filling their frames.
+    img = background(*dark, [(0x2DD4BF, 1120, 980, 560, 72), (0x8B5CF6, 240, 1500, 560, 64), (0xF97316, 1100, 2500, 520, 52)])
+    top = headline_13(img, "Your GitHub streak,\nfront and center", "Bold widgets that fill the frame,\nin every size.")
+    stack(img, top + 20, [
+        [src.widget("aurora-graph-large", 1120)],
+        [src.widget("ember-streak-small", 532), src.widget("marks-week-small", 532)],
+    ], 56)
+    src.save(img, "01-home-screen-widgets")
+
+    # 2. Six looks, Marks included, in small and medium.
+    img = background(*dark, [(0x22C55E, 200, 1000, 560, 60), (0x8B5CF6, 1150, 1900, 560, 60), (0xF59E0B, 250, 2600, 480, 44)])
+    top = headline_13(img, "Six looks,\nevery size", "Classic, Aurora, Ember, Terminal,\nPaper and the new Marks.")
+    stack(img, top + 10, [
+        [src.widget("classic-graph-medium", 1000)],
+        [src.widget("aurora-week-small", 474), src.widget("ember-graph-small", 474)],
+        [src.widget("terminal-streak-small", 474), src.widget("paper-week-small", 474)],
+        [src.widget("marks-graph-medium", 1000)],
+    ], 40)
+    src.save(img, "02-six-looks")
+
+    # 3. The Styles screen, with the rotation strip.
+    phone_page("03-new-look-every-day", [(0x2DD4BF, 1150, 1100, 560, 70), (0x8B5CF6, 150, 2300, 600, 70)],
+               "A new look\nevery day", "Circle the looks you love.\nThey take turns at midnight.", "styles")
+
+    # 4. The Customize sheet.
+    phone_page("04-make-it-yours", [(0xFF7A59, 1120, 1150, 540, 70), (0x6366F1, 180, 2300, 600, 76)],
+               "Make it yours", "Pick a shape and a color,\nthen save it as your own look.", "customize")
+
+    # 5. Marks up close, with what the symbols mean.
+    img = background(*dark, [(0x94A3B8, 1080, 1150, 600, 46), (0x3B82F6, 220, 2350, 560, 54)])
+    top = headline_13(img, "Every day,\nmarked", "A symbol for every day, so you see\nwhat happened, not just how much.")
+    large = src.widget("marks-graph-large", 1120)
+    legend_h = 100 + 34 + 48
+    gap = 110
+    y = top + (H - top - large.height - gap - legend_h) / 2
+    shadowed(img, large, (W - large.width) / 2, y)
+    marks_legend(img, y + large.height + gap)
+    src.save(img, "05-every-day-marked")
+
+    # 6. Rest days and the freeze.
+    img = background(*dark, [(0x38BDF8, 1120, 1000, 560, 66), (0x22C55E, 200, 2350, 560, 56)])
+    top = headline_13(img, "Rest without\nlosing your streak", "Rest days and a monthly freeze\nkeep your streak alive.")
+    stack(img, top + 20, [[src.widget("classic-week-large", 1120)], [src.widget("ember-graph-medium", 1120)]], 60)
+    src.save(img, "06-rest-days")
+
+    # 7. Home.
+    phone_page("07-at-a-glance", [(0x22C55E, 1120, 1100, 540, 62), (0x14B8A6, 180, 2350, 600, 62)],
+               "Everything\nat a glance", "Today, your streak and your looks,\nall on one screen.", "home")
+
+
+def layout_12(src):
+    widget, capture, save = src.widget, src.capture, src.save
 
     # 1. Hero: widgets in every layout, stacked like a home screen.
     img = background(0x07140C, 0x050807, [(0x1F9D4A, 250, 900, 520, 110), (0x3B82F6, 1150, 2300, 560, 70)])
@@ -210,7 +367,14 @@ def main(widgets, captures, out):
     save(img, "07-at-a-glance")
 
 
+def main(widgets, captures, out, version="1.3"):
+    layouts = {"1.3": layout_13, "1.2": layout_12}
+    if version not in layouts:
+        sys.exit(f"unknown set {version}, pick one of {', '.join(layouts)}")
+    layouts[version](Sources(widgets, captures, out))
+
+
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4, 5):
         sys.exit(__doc__)
     main(*sys.argv[1:])
