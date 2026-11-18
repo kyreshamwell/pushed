@@ -29,6 +29,28 @@ Work happens on the branch `feature/redesign`.
 - Show, don't explain. If a screen needs a paragraph of footer text, the screen is wrong.
 - Every tap responds instantly, with native iOS motion and haptics. It should feel like an Apple app.
 
+## Status (2026-11-18)
+
+- **Widget phase: done.** Fill-the-frame engine, new headers, today ring, Large labels,
+  the five revamped looks plus Marks, Range removed. Lock Screen renders are
+  pixel-identical to 1.2.
+- **App phase: done.** Styles screen (with the rotation preview fix and the lag fix),
+  Home, Settings, restyled onboarding, copy pass.
+- **QA phase: done.**
+  - Upgrading from 1.2 keeps every saved look, the rotation order and today's look,
+    rest days, freezes, reminders and placed widgets.
+  - Fixed: a seeded look's number color, the day off offer on a broken streak,
+    a stale library read, and layout at the largest text sizes.
+  - No em or en dashes left in the repo outside `Design/`.
+  - Tests: 297, 5 skipped (render only), 0 failures.
+- **Cleanup: done.** The old worktree and its branch are deleted, and the README is
+  updated.
+- **Left:**
+  - App Store screenshots for 1.3.
+  - A last look at Marks, Classic dark, Big streak and This week on a real home
+    screen, and at tinted mode.
+  - The user tests on a real device with a real GitHub account, then merges to `main`.
+
 ## Widget
 
 ### Fill the frame
