@@ -260,8 +260,11 @@ final class RenderPreviews: XCTestCase {
 
     /// The widgets for the App Store screenshots: each card on its own with
     /// a clear background, drawn large so it stays sharp once composed. The
-    /// streak runs over weekend rest days and one freeze, so the new marks
-    /// show. `Scripts/compose_screenshots.py` lays these out.
+    /// streak runs over weekend rest days and one freeze, so the day off
+    /// marks and the Marks symbols show. Every built-in look, Marks
+    /// included, is drawn in all three sizes and layouts, plus Classic in
+    /// light mode and Marks in a picked color. `Scripts/compose_screenshots.py`
+    /// lays these out.
     func testRenderStoreWidgets() throws {
         guard let base = outputFolder else { throw XCTSkip("set PUSHED_RENDER_DIR to draw the previews") }
         let folder = base.appendingPathComponent("store")
@@ -284,26 +287,44 @@ final class RenderPreviews: XCTestCase {
 
         func card(
             _ name: String, _ family: WidgetFamily, _ style: WidgetStyle, _ layout: WidgetLayout,
-            stat: WidgetStat = .streak, custom: CustomWidgetStyle = .default
+            stat: WidgetStat = .streak, custom: CustomWidgetStyle = .default, scheme: ColorScheme = .dark
         ) throws {
             let view = WidgetPreviewCard(
                 snapshot: snapshot, family: family, style: style, layout: layout,
                 stat: stat, icon: "🔥", custom: custom, protection: protection, dayOffMark: .stripes, now: now
             )
-            .environment(\.colorScheme, .dark)
+            .environment(\.colorScheme, scheme)
             let renderer = ImageRenderer(content: view)
             renderer.scale = 4
             let image = try XCTUnwrap(renderer.uiImage, "\(name) didn't render")
             try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("\(name).png"))
         }
 
-        // Every built-in style in every layout and size.
+        let sizes: [(WidgetFamily, String)] = [(.systemSmall, "small"), (.systemMedium, "medium"), (.systemLarge, "large")]
+
+        // Every built-in look, Marks included, in every layout and size.
         for style in WidgetStyle.builtIn {
             for layout in WidgetLayout.allCases {
-                for (family, size) in [(WidgetFamily.systemSmall, "small"), (.systemMedium, "medium"), (.systemLarge, "large")] {
+                for (family, size) in sizes {
                     try card("\(style.rawValue)-\(layout.rawValue)-\(size)", family, style, layout)
                 }
             }
+        }
+
+        // Classic follows the phone's appearance, so it's drawn light too.
+        // Marks follows whatever color is picked in Customize.
+        var blueMarks = CustomWidgetStyle.seeded(from: .marks)
+        blueMarks.squares = RGBAColor(hex: 0x5B8DEF)
+        for layout in WidgetLayout.allCases {
+            for (family, size) in sizes {
+                try card("classic-light-\(layout.rawValue)-\(size)", family, .classic, layout, scheme: .light)
+                try card("marks-blue-\(layout.rawValue)-\(size)", family, .custom, layout, custom: blueMarks)
+            }
+        }
+
+        // What Show puts in the header.
+        for stat in WidgetStat.allCases {
+            try card("aurora-graph-medium-\(stat.rawValue)", .systemMedium, .aurora, .graph, stat: stat)
         }
 
         // Custom styles, one per shape.
