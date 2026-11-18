@@ -200,6 +200,17 @@ extension StreakHistory {
         return (week, todayIndex)
     }
 
+    /// Last week, Sunday through Saturday. Every day is in the past.
+    var lastWeek: [StreakDay] {
+        guard let today = date(daysAgo: 0) else {
+            return Array(repeating: StreakDay(level: 0), count: 7)
+        }
+        let todayIndex = calendar.component(.weekday, from: today) - 1
+        return (0..<7).map { position in
+            day(daysAgo: todayIndex + 7 - position) ?? StreakDay(level: 0)
+        }
+    }
+
     /// Days pushed since Sunday.
     var pushedThisWeek: Int {
         thisWeek.days.compactMap { $0 }.filter(\.isActive).count

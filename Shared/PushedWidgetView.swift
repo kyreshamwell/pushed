@@ -193,15 +193,25 @@ struct PushedWidgetView: View {
         .accessibilityLabel(statusDescription(reading))
     }
 
+    /// The header, then last week over this week, so the two rows fill the
+    /// height the way the graph does.
     private func weekMedium(_ reading: Reading, size: CGSize) -> some View {
         let letters = reading.showsWords ? WeekSquares.letterSpace : 0
+        let rowGap = 8 * reading.theme.spacing
         let room = size.height - GraphLayout.compactHeader - GraphLayout.compactHeaderGap - letters
-        let row = RowFit(width: size.width, count: 7, gap: 8 * reading.theme.spacing, maxCell: room)
-        return VStack(alignment: .leading, spacing: GraphLayout.compactHeaderGap) {
+        let row = RowFit(width: size.width, count: 7, gap: rowGap, maxCell: (room - rowGap) / 2)
+        let previous = reading.history.lastWeek
+        return VStack(alignment: .leading, spacing: 0) {
             mediumHeader(reading)
                 .frame(height: GraphLayout.compactHeader)
-            Spacer(minLength: 0)
+            Spacer(minLength: GraphLayout.compactHeaderGap)
+            DayGrid(
+                cells: previous.indices.map { DayGrid.Cell(content: .day(previous[$0]), frame: row.frame($0)) },
+                size: row.size,
+                theme: reading.theme
+            )
             WeekSquares(week: reading.history.thisWeek, fit: row, theme: reading.theme, letters: reading.showsWords)
+                .padding(.top, rowGap)
         }
     }
 

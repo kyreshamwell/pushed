@@ -412,6 +412,15 @@ final class StreakProtectionTests: XCTestCase {
         XCTAssertEqual(snap.history(asOf: date("2026-10-14")).pushedThisWeek, 3)
     }
 
+    func testLastWeekIsTheSundayToSaturdayBeforeThisOne() {
+        // Wednesday the 14th: last week ran Sunday the 4th to Saturday the 10th.
+        let snap = snapshot(endingOn: "2026-10-14", ".#.###. .###")
+        let lastWeek = snap.history(asOf: date("2026-10-14")).lastWeek
+
+        XCTAssertEqual(lastWeek.count, 7)
+        XCTAssertEqual(lastWeek.map(\.isActive), [false, true, false, true, true, true, false])
+    }
+
     func testUndoingAClaimPutsTheDayBack() {
         let snap = snapshot(endingOn: "2026-10-15", ".#####. .##..")
         var protection = resting(sunday, saturday)
