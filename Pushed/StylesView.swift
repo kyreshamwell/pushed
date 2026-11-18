@@ -334,7 +334,7 @@ struct StylesView: View {
                 .lineLimit(1)
                 .foregroundStyle(Color(uiColor: .systemBackground))
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .frame(minHeight: 50)
                 .background(Color.primary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(PressableStyle(scale: 0.97))

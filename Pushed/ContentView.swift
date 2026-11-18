@@ -63,6 +63,7 @@ struct HomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(StyleLibraryStore.self) private var store
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         GeometryReader { geometry in
@@ -214,7 +215,10 @@ struct HomeView: View {
     // MARK: - Numbers
 
     private func statTiles(_ history: StreakHistory, snapshot: ContributionSnapshot) -> some View {
-        HStack(spacing: 10) {
+        // Three across leaves no room for the labels at the largest text
+        // sizes, so there they stack.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 10))
+        return layout {
             StatTile(value: history.streak, label: "Current streak")
             StatTile(value: history.bestStreak, label: "Best streak")
             StatTile(value: snapshot.totalContributions, label: "This year")

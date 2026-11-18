@@ -70,7 +70,7 @@ struct OnboardingView: View {
                         .font(.body.weight(.bold))
                         .foregroundStyle(Color(red: 0x04 / 255, green: 0x15 / 255, blue: 0x0A / 255))
                         .frame(maxWidth: .infinity)
-                        .frame(height: 50)
+                        .frame(minHeight: 50)
                         .background(Color.pushedGreen, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                     .buttonStyle(PressableStyle(scale: 0.97))
