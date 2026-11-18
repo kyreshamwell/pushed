@@ -27,6 +27,9 @@ struct CustomizeSheet: View {
     /// Just tall enough for everything, unless that would cover the preview.
     /// Then it stops there and the content scrolls.
     private var compact: PresentationDetent { .height(min(contentHeight, maxHeight)) }
+    /// As tall as the sheet can get with the preview still in view. More
+    /// options uses it, and its longer list scrolls inside.
+    private var roomy: PresentationDetent { .height(maxHeight) }
 
     private var isBuiltIn: Bool { save != nil }
     private var hasChanges: Bool { style != original }
@@ -56,7 +59,7 @@ struct CustomizeSheet: View {
                 .padding(.top, 18)
                 .padding(.bottom, 20)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                    let wasCompact = detent != .large
+                    let wasCompact = detent != .large && !showsMore
                     contentHeight = ceil(height)
                     if wasCompact { detent = compact }
                 }
@@ -67,18 +70,18 @@ struct CustomizeSheet: View {
                 MoreOptionsView(style: $style, original: original)
             }
         }
-        .presentationDetents([compact, .large], selection: $detent)
+        .presentationDetents([compact, roomy, .large], selection: $detent)
         .presentationDragIndicator(.visible)
         // Swipes inside the sheet scroll its content instead of resizing it.
         .presentationContentInteraction(.scrolls)
         // No dimming over the preview, so the colors you pick read true.
-        .presentationBackgroundInteraction(.enabled(upThrough: compact))
+        .presentationBackgroundInteraction(.enabled(upThrough: roomy))
         .presentationCornerRadius(28)
         .presentationBackground(Color.card)
         .interactiveDismissDisabled(isBuiltIn && hasChanges)
         .onChange(of: showsMore) { _, showing in
-            // Room for the longer list, then back to half so the preview shows.
-            withAnimation(.snappy) { detent = showing ? .large : compact }
+            // Taller for the longer list, but never over the preview; back to fit after.
+            withAnimation(.snappy) { detent = showing ? roomy : compact }
         }
         .confirmationDialog("Keep your changes?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
             if let save, canSave {
