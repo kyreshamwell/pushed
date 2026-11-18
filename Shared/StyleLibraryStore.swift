@@ -77,7 +77,9 @@ final class StyleLibraryStore {
     /// Picks up what's saved, unless changes of ours are still on the way.
     func refresh() {
         guard !debouncer.isPending else { return }
-        let saved = AppConfig.styleLibrary
+        // Read behind any save still on the queue, so coming straight back
+        // to the app can't load the library from before the last change.
+        let saved = Self.queue.sync { AppConfig.styleLibrary }
         if saved != library { library = saved }
     }
 
@@ -89,7 +91,7 @@ final class StyleLibraryStore {
     // MARK: - Off the main thread
 
     /// One queue, so a reload always follows the save it's for.
-    private static let queue = DispatchQueue(label: "com.kyreshamwell.pushed.styles", qos: .utility)
+    private nonisolated static let queue = DispatchQueue(label: "com.kyreshamwell.pushed.styles", qos: .utility)
 
     nonisolated static func saveToSharedContainer(_ library: StyleLibrary) {
         queue.async { AppConfig.styleLibrary = library }
