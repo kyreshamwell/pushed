@@ -69,3 +69,25 @@ final class HomeWordsTests: XCTestCase {
         XCTAssertFalse(HomeWords.synced(now.addingTimeInterval(-240), now: now).isEmpty)
     }
 }
+
+extension HomeWordsTests {
+    func testADayOffOnlyCarriesAStreakThatIsStillAlive() {
+        let formatter = ContributionCalendar.dateFormatter
+        // Pushed through Sunday the 15th, Monday the 16th missed, and Tuesday
+        // the 17th is the week's one rest day.
+        let levels = Array(repeating: 2, count: 15) + [0, 0]
+        let snapshot = ContributionSnapshot(
+            totalContributions: 30, recentLevels: levels,
+            lastDate: "2026-11-17", fetchedAt: formatter.date(from: "2026-11-17")!
+        )
+        let restOnTuesday = StreakProtection(schedules: [.init(from: "2026-01-01", weekdays: [3])])
+        let missed = snapshot.history(protection: restOnTuesday, asOf: formatter.date(from: "2026-11-17")!)
+        XCTAssertEqual(HomeWords.today(missed, count: nil).title, "Rest day")
+        XCTAssertEqual(HomeWords.today(missed, count: nil).detail, "Save yesterday to keep your streak")
+
+        var covered = restOnTuesday
+        covered.claim(.freeze, on: formatter.date(from: "2026-11-16")!)
+        let kept = snapshot.history(protection: covered, asOf: formatter.date(from: "2026-11-17")!)
+        XCTAssertEqual(HomeWords.today(kept, count: nil).detail, "Your streak carries on")
+    }
+}

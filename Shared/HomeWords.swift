@@ -53,10 +53,14 @@ enum HomeWords {
                 : history.canSaveStreak ? "Push today to keep it going"
                 : "Push today to start a streak"
             return Today(kind: .pending, title: "Not yet today", detail: detail, symbol: "circle.dashed")
-        case .off(.rest):
-            return Today(kind: .rest, title: "Rest day", detail: "Your streak carries on", symbol: "moon.zzz.fill")
-        case .off(.freeze):
-            return Today(kind: .freeze, title: "Streak frozen", detail: "Today is covered", symbol: "snowflake")
+        case .off(let kind):
+            // A day off only carries a streak that's alive through yesterday.
+            let detail = history.todayCanKeepStreak ? (kind == .rest ? "Your streak carries on" : "Today is covered")
+                : history.canSaveStreak ? "Save yesterday to keep your streak"
+                : "Nothing is owed today"
+            return kind == .rest
+                ? Today(kind: .rest, title: "Rest day", detail: detail, symbol: "moon.zzz.fill")
+                : Today(kind: .freeze, title: "Streak frozen", detail: detail, symbol: "snowflake")
         }
     }
 

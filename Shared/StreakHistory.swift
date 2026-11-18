@@ -241,16 +241,41 @@ extension StreakHistory {
     /// left. Found by trying the claim and seeing whether it holds, so this
     /// can't drift from the rules that decide what's drawn.
     func canClaim(_ kind: DayOff, daysAgo: Int) -> Bool {
+        guard let todayIndex, let outcome = trialClaim(kind, daysAgo: daysAgo) else { return false }
+        return outcome[todayIndex - daysAgo] == kind
+    }
+
+    /// Whether claiming yesterday would take today's day off away. A week has
+    /// so many rest days and a month one freeze, handed out in date order, so
+    /// covering yesterday can use up the one today was holding. That's allowed,
+    /// since a claim is a move, and it's how a freeze spent on today can still
+    /// save yesterday, but the button should say it's a move.
+    func claimMovesTodaysDayOff(_ kind: DayOff, daysAgo: Int) -> Bool {
+        guard daysAgo > 0, let todayIndex, days.indices.contains(todayIndex),
+              days[todayIndex].off != nil,
+              let outcome = trialClaim(kind, daysAgo: daysAgo) else { return false }
+        return outcome[todayIndex] == nil
+    }
+
+    /// Whether a day off today would keep anything: only while the streak is
+    /// alive through yesterday. With yesterday still empty the streak is
+    /// already broken, so today's rest day or freeze would be spent for
+    /// nothing. Covering yesterday comes first.
+    var todayCanKeepStreak: Bool { gap == 1 }
+
+    /// Every day's day off with the claim added, or nil when the day can't
+    /// be claimed at all: outside the window, pushed, already off, or a
+    /// freeze with freezes switched off.
+    private func trialClaim(_ kind: DayOff, daysAgo: Int) -> [DayOff?]? {
         guard StreakProtection.claimWindow.contains(daysAgo),
-              let todayIndex, let endDate,
+              let endDate,
               let day = day(daysAgo: daysAgo), !day.isActive, day.off == nil,
-              let date = date(daysAgo: daysAgo) else { return false }
-        if kind == .freeze && !protection.freezeEnabled { return false }
+              let date = date(daysAgo: daysAgo) else { return nil }
+        if kind == .freeze && !protection.freezeEnabled { return nil }
 
         var trial = protection
         trial.claims[StreakProtection.key(date)] = kind
-        let outcome = trial.daysOff(levels: days.map(\.level), endingOn: endDate, calendar: calendar)
-        return outcome[todayIndex - daysAgo] == kind
+        return trial.daysOff(levels: days.map(\.level), endingOn: endDate, calendar: calendar)
     }
 
     /// The claim made by hand on that day, if there is one and the day is

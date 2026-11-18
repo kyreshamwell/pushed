@@ -172,11 +172,19 @@ struct HomeView: View {
                 }
             }
             HStack(spacing: 8) {
+                // A claim that takes today's day off away says so, since
+                // today goes back to needing a push.
                 if history.canClaim(.rest, daysAgo: 1) {
-                    Button("Use a rest day", systemImage: "moon.zzz") { model.claim(.rest, daysAgo: 1) }
+                    Button(
+                        history.claimMovesTodaysDayOff(.rest, daysAgo: 1) ? "Move today's rest day" : "Use a rest day",
+                        systemImage: "moon.zzz"
+                    ) { model.claim(.rest, daysAgo: 1) }
                 }
                 if history.canClaim(.freeze, daysAgo: 1) {
-                    Button("Use a freeze", systemImage: "snowflake") { model.claim(.freeze, daysAgo: 1) }
+                    Button(
+                        history.claimMovesTodaysDayOff(.freeze, daysAgo: 1) ? "Move today's freeze" : "Use a freeze",
+                        systemImage: "snowflake"
+                    ) { model.claim(.freeze, daysAgo: 1) }
                 }
             }
             .buttonStyle(.bordered)
@@ -298,7 +306,7 @@ struct TodayCard: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
-            if history.today == .pending, canTakeToday {
+            if history.today == .pending, history.todayCanKeepStreak, canTakeToday {
                 HStack(spacing: 8) {
                     if history.canClaim(.rest, daysAgo: 0) {
                         Button("Rest day", systemImage: "moon.zzz") { model.claim(.rest, daysAgo: 0) }
