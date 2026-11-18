@@ -200,24 +200,21 @@ struct StylesView: View {
     /// of cards in Apple Pay.
     private var lookList: some View {
         NavigationStack {
-            List {
-                Section {
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 18) {
                     ForEach(allLooks, id: \.id) { item in
-                        lookListRow(item.id, look: item.look)
+                        lookTile(item.id, look: item.look)
                             .contextMenu { listMenu(item.id) }
                     }
-                } footer: {
-                    Text("The circle adds a look to your rotation.")
+                    newLookTile
                 }
-                Section {
-                    Button {
-                        newLookPending = true
-                        showsAllLooks = false
-                    } label: {
-                        Label("New Look", systemImage: "plus")
-                    }
-                    .disabled(!store.library.canAdd)
-                }
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                Text("The circle adds a look to your rotation.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 14)
+                    .padding(.bottom, 28)
             }
             .navigationTitle("Looks")
             .navigationBarTitleDisplayMode(.inline)
@@ -242,48 +239,68 @@ struct StylesView: View {
         .tint(.pushedGreen)
     }
 
-    private func lookListRow(_ id: LookID, look: WidgetLook) -> some View {
+    /// One look in the grid: the small widget wearing it, its name, and the
+    /// rotation circle. The look on show gets a ring instead of a checkmark.
+    private func lookTile(_ id: LookID, look: WidgetLook) -> some View {
         let inRotation = store.library.isInRotation(id)
-        let detail: String = {
-            if inRotation { return "In rotation" }
-            if case .saved = id { return "Your look" }
-            return "Built in"
-        }()
-        return HStack(spacing: 12) {
-            Button { pickLook(id) } label: {
-                HStack(spacing: 14) {
-                    LookThumb(look: look, data: data)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(look.name)
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(Color.primary)
-                            .lineLimit(1)
-                        Text(detail)
-                            .font(.footnote)
+        let isOn = selection == id
+        return VStack(spacing: 8) {
+            GeometryReader { geo in
+                ScaledWidget(look: look, family: .systemSmall,
+                             scale: geo.size.width / WidgetPreviewCard.size(for: .systemSmall).width, data: data)
+            }
+            .aspectRatio(1, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(isOn ? Color.pushedGreen : .clear, lineWidth: 2.5)
+                    .padding(-5)
+            }
+            HStack(spacing: 4) {
+                Text(look.name)
+                    .font(.subheadline.weight(isOn ? .bold : .medium))
+                    .foregroundStyle(isOn ? Color.primary : Color.secondary)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                Button { toggleRotation(id, keepSelection: true) } label: {
+                    RotationCircle(isOn: inRotation)
+                        .frame(width: 44, height: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, -10)
+                .accessibilityLabel(inRotation ? "Remove \(look.name) from rotation" : "Add \(look.name) to rotation")
+            }
+            .padding(.leading, 4)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { pickLook(id) }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Show \(look.name)")
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
+    }
+
+    private var newLookTile: some View {
+        Button {
+            newLookPending = true
+            showsAllLooks = false
+        } label: {
+            VStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color(uiColor: .separator), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay {
+                        Image(systemName: "plus")
+                            .font(.system(size: 26, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
-                    Spacer(minLength: 8)
-                    if selection == id {
-                        Image(systemName: "checkmark")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(Color.pushedGreen)
-                    }
-                }
-                .contentShape(Rectangle())
+                Text("New Look")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Show \(look.name)")
-            .accessibilityAddTraits(selection == id ? .isSelected : [])
-
-            Button { toggleRotation(id, keepSelection: true) } label: {
-                RotationCircle(isOn: inRotation)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(inRotation ? "Remove \(look.name) from rotation" : "Add \(look.name) to rotation")
         }
-        .padding(.vertical, 2)
+        .buttonStyle(PressableStyle())
+        .disabled(!store.library.canAdd)
     }
 
     /// The list's long-press menu. Customizing closes the list first, so the
@@ -544,9 +561,9 @@ struct RotationCircle: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(isOn ? Color.pushedGreen : Color.black.opacity(0.55))
+                .fill(isOn ? Color.pushedGreen : Color.white.opacity(0.18))
             Circle()
-                .strokeBorder(isOn ? Color.pushedGreen : Color.white.opacity(0.7), lineWidth: 2)
+                .strokeBorder(isOn ? Color.pushedGreen : Color.white.opacity(0.85), lineWidth: 1.5)
             if isOn {
                 Image(systemName: "checkmark")
                     .font(.system(size: 11, weight: .heavy))
@@ -555,7 +572,7 @@ struct RotationCircle: View {
             }
         }
         .frame(width: 24, height: 24)
-        .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+        .background(.ultraThinMaterial, in: Circle())
         .scaleEffect(isOn ? 1 : 0.94)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isOn)
     }
