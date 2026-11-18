@@ -432,15 +432,15 @@ struct BestStreakSheet: View {
 struct YearSheet: View {
     @State var model: YearHistoryModel
     @State private var selectedYear = Calendar.current.component(.year, from: Date())
-    @State private var openMonth: Int? = Calendar.current.component(.month, from: Date())
+    /// A `MonthSummary.id`, year and month together.
+    @State private var openMonth: Int? = Calendar.current.component(.year, from: Date()) * 100
+        + Calendar.current.component(.month, from: Date())
 
     private let thisYear = Calendar.current.component(.year, from: Date())
 
     var body: some View {
         InsightSheetFrame(title: "Your year") {
-            if model.years.count > 1 {
-                switcher
-            }
+            switcher
             switch model.phase(for: selectedYear) {
             case .loading:
                 loading
@@ -461,8 +461,8 @@ struct YearSheet: View {
     private var switcher: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 0) {
-                ForEach(model.years, id: \.self) { year in
-                    segment(year).frame(minWidth: 58, maxWidth: .infinity)
+                ForEach(model.options, id: \.self) { year in
+                    segment(year).frame(minWidth: year == YearHistoryModel.lastTwelveMonths ? 120 : 58, maxWidth: .infinity)
                 }
             }
             .padding(2)
@@ -471,8 +471,8 @@ struct YearSheet: View {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 0) {
-                        ForEach(model.years, id: \.self) { year in
-                            segment(year).frame(width: 64).id(year)
+                        ForEach(model.options, id: \.self) { year in
+                            segment(year).frame(width: year == YearHistoryModel.lastTwelveMonths ? 124 : 64).id(year)
                         }
                     }
                     .padding(2)
@@ -488,10 +488,14 @@ struct YearSheet: View {
         return Button {
             withAnimation(.snappy) {
                 selectedYear = year
-                openMonth = year == thisYear ? Calendar.current.component(.month, from: Date()) : 1
+                let month = Calendar.current.component(.month, from: Date())
+                openMonth = switch year {
+                case YearHistoryModel.lastTwelveMonths, thisYear: thisYear * 100 + month
+                default: year * 100 + 1
+                }
             }
         } label: {
-            Text(String(year))
+            Text(title(year))
                 .font(.footnote.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(selected ? Color.primary : Color.secondary)
@@ -515,7 +519,7 @@ struct YearSheet: View {
     private var loading: some View {
         VStack(spacing: 12) {
             ProgressView()
-            Text("Loading \(String(selectedYear)) from GitHub")
+            Text("Loading \(title(selectedYear)) from GitHub")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -527,7 +531,7 @@ struct YearSheet: View {
             Image(systemName: "wifi.exclamationmark")
                 .font(.system(size: 26, weight: .semibold))
                 .foregroundStyle(.secondary)
-            Text("Couldn't load \(String(selectedYear))")
+            Text("Couldn't load \(title(selectedYear).lowercased())")
                 .font(.headline)
             Text(message)
                 .font(.subheadline)
@@ -550,30 +554,30 @@ struct YearSheet: View {
             InsightTile(value: summary.total.formatted(), label: "Contributions")
             InsightTile(value: summary.activeDays.formatted(), label: "Active days")
             InsightTile(value: days(summary.longestRun), label: "Longest run")
-            InsightTile(value: summary.busiestMonth.map(monthName) ?? "None", label: "Busiest month")
+            InsightTile(value: busiestMonth(summary), label: "Busiest month")
         }
         SheetLabel(text: "By month")
             .padding(.bottom, -8)
         let most = max(summary.months.map(\.total).max() ?? 0, 1)
         VStack(spacing: 6) {
             ForEach(summary.months) { month in
-                monthRow(month, most: most, today: summary.todayKey)
+                monthRow(month, most: most, today: summary.todayKey, withYear: summary.isRolling)
             }
         }
     }
 
-    private func monthRow(_ month: MonthSummary, most: Int, today: String) -> some View {
-        let open = openMonth == month.month && !month.isFuture
+    private func monthRow(_ month: MonthSummary, most: Int, today: String, withYear: Bool) -> some View {
+        let open = openMonth == month.id && !month.isFuture
         return VStack(alignment: .leading, spacing: 0) {
             Button {
                 withAnimation(.spring(response: 0.34, dampingFraction: 0.86)) {
-                    openMonth = open ? nil : month.month
+                    openMonth = open ? nil : month.id
                 }
             } label: {
                 HStack(spacing: 10) {
-                    Text(shortMonth(month.month))
+                    Text(withYear ? "\(shortMonth(month.month)) \(String(month.year))" : shortMonth(month.month))
                         .font(.footnote.weight(.semibold))
-                        .frame(width: 34, alignment: .leading)
+                        .frame(width: withYear ? 68 : 34, alignment: .leading)
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
                             Capsule().fill(InsightColors.barTrack)
@@ -594,7 +598,7 @@ struct YearSheet: View {
             }
             .buttonStyle(.plain)
             .disabled(month.isFuture)
-            .accessibilityLabel("\(monthName(month.month)), \(month.total) contributions")
+            .accessibilityLabel("\(monthName(month.month)) \(String(month.year)), \(month.total) contributions")
             .accessibilityHint(month.isFuture ? "" : (open ? "Hides the month" : "Shows the month"))
 
             if open {
@@ -663,6 +667,18 @@ struct YearSheet: View {
 
     private func days(_ count: Int) -> String {
         "\(count) \(count == 1 ? "day" : "days")"
+    }
+
+    /// A year's switcher label, or "Last 12 months".
+    private func title(_ year: Int) -> String {
+        year == YearHistoryModel.lastTwelveMonths ? "Last 12 months" : String(year)
+    }
+
+    /// Across a year boundary the month needs its year, as in "Dec 2025".
+    private func busiestMonth(_ summary: YearSummary) -> String {
+        guard let month = summary.busiestMonth else { return "None" }
+        guard summary.isRolling, let year = summary.busiestMonthYear else { return monthName(month) }
+        return "\(shortMonth(month)) \(String(year))"
     }
 
     private func monthName(_ month: Int) -> String {

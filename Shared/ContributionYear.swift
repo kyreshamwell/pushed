@@ -57,6 +57,7 @@ struct ContributionYear: Codable, Equatable, Sendable {
 
 /// One month of a year: its days, its total and its records.
 struct MonthSummary: Equatable, Sendable, Identifiable {
+    let year: Int
     /// 1 is January.
     let month: Int
     /// Every date of the month, empty ones included, oldest first.
@@ -72,7 +73,8 @@ struct MonthSummary: Equatable, Sendable, Identifiable {
     /// The whole month is still to come.
     let isFuture: Bool
 
-    var id: Int { month }
+    /// Unique across years, since the last 12 months can hold two Novembers.
+    var id: Int { year * 100 + month }
 }
 
 /// What a year adds up to. Days after `today` count as still to come.
@@ -90,16 +92,80 @@ struct YearSummary: Equatable, Sendable {
     /// "yyyy-MM-dd" of today, for telling past squares from future ones.
     let todayKey: String
 
+    /// True for GitHub's last 12 months rather than a calendar year.
+    let isRolling: Bool
+    /// The year of `busiestMonth`, which matters across a year boundary.
+    let busiestMonthYear: Int?
+
     init(_ data: ContributionYear, today: Date = Date(), calendar: Calendar = Calendar(identifier: .gregorian)) {
+        self.init(
+            year: data.year,
+            months: (1...12).map { (data.year, $0) },
+            days: data.days,
+            fromKey: "",
+            isRolling: false,
+            today: today,
+            calendar: calendar
+        )
+    }
+
+    /// GitHub's last 12 months, read from the snapshot: a year back from its
+    /// last day, with a bar for every month that range touches. Nil when the
+    /// snapshot has no daily counts.
+    init?(lastTwelveMonthsOf snapshot: ContributionSnapshot, today: Date = Date(), calendar: Calendar = Calendar(identifier: .gregorian)) {
+        guard let counts = snapshot.recentCounts,
+              !counts.isEmpty,
+              counts.count == snapshot.recentLevels.count,
+              let end = snapshot.endDate,
+              let first = calendar.date(byAdding: .day, value: -(counts.count - 1), to: end),
+              let yearBack = calendar.date(byAdding: .year, value: -1, to: end),
+              let from = calendar.date(byAdding: .day, value: 1, to: yearBack) else { return nil }
+        let formatter = ContributionCalendar.dateFormatter
+        let start = max(first, from)
+        let days = counts.indices.compactMap { index -> YearDay? in
+            guard let date = calendar.date(byAdding: .day, value: index, to: first) else { return nil }
+            return YearDay(date: formatter.string(from: date), count: counts[index], level: snapshot.recentLevels[index])
+        }
+
+        var months: [(Int, Int)] = []
+        var cursor = calendar.dateComponents([.year, .month], from: start)
+        let last = calendar.dateComponents([.year, .month], from: end)
+        while let year = cursor.year, let month = cursor.month, let lastYear = last.year, let lastMonth = last.month,
+              (year, month) <= (lastYear, lastMonth) {
+            months.append((year, month))
+            cursor = month == 12 ? DateComponents(year: year + 1, month: 1) : DateComponents(year: year, month: month + 1)
+        }
+
+        self.init(
+            year: last.year ?? 0,
+            months: months,
+            days: days,
+            fromKey: formatter.string(from: start),
+            isRolling: true,
+            today: today,
+            calendar: calendar
+        )
+    }
+
+    /// Adds up `months`, counting only days from `fromKey` to today.
+    private init(
+        year: Int,
+        months monthList: [(Int, Int)],
+        days: [YearDay],
+        fromKey: String,
+        isRolling: Bool,
+        today: Date,
+        calendar: Calendar
+    ) {
         let formatter = ContributionCalendar.dateFormatter
         let todayKey = formatter.string(from: today)
-        let byDate = Dictionary(data.days.map { ($0.date, $0) }, uniquingKeysWith: { _, last in last })
+        let byDate = Dictionary(days.map { ($0.date, $0) }, uniquingKeysWith: { _, last in last })
 
         var months: [MonthSummary] = []
         var run = 0
         var longest = 0
-        for month in 1...12 {
-            let firstKey = String(format: "%04d-%02d-01", data.year, month)
+        for (monthYear, month) in monthList {
+            let firstKey = String(format: "%04d-%02d-01", monthYear, month)
             guard let first = formatter.date(from: firstKey),
                   let length = calendar.range(of: .day, in: .month, for: first)?.count else { continue }
 
@@ -111,7 +177,7 @@ struct YearSummary: Equatable, Sendable {
                 let key = formatter.string(from: date)
                 let day = byDate[key] ?? YearDay(date: key, count: 0, level: 0)
                 days.append(day)
-                guard key <= todayKey else { continue }
+                guard key >= fromKey, key <= todayKey else { continue }
                 if day.count > 0 {
                     run += 1
                     monthRun += 1
@@ -123,8 +189,9 @@ struct YearSummary: Equatable, Sendable {
                 monthLongest = max(monthLongest, monthRun)
             }
 
-            let past = days.filter { $0.date <= todayKey }
+            let past = days.filter { $0.date >= fromKey && $0.date <= todayKey }
             months.append(MonthSummary(
+                year: monthYear,
                 month: month,
                 days: days,
                 leadingBlanks: calendar.component(.weekday, from: first) - 1,
@@ -136,7 +203,8 @@ struct YearSummary: Equatable, Sendable {
             ))
         }
 
-        year = data.year
+        self.year = year
+        self.isRolling = isRolling
         self.months = months
         self.todayKey = todayKey
         total = months.reduce(0) { $0 + $1.total }
@@ -144,9 +212,11 @@ struct YearSummary: Equatable, Sendable {
         longestRun = longest
         busiestDay = Self.busiest(months.compactMap(\.busiestDay))
         // Strictly greater, so a tie keeps the earlier month.
-        busiestMonth = months.reduce(nil as MonthSummary?) { best, month in
+        let busiest = months.reduce(nil as MonthSummary?) { best, month in
             month.total > (best?.total ?? 0) ? month : best
-        }?.month
+        }
+        busiestMonth = busiest?.month
+        busiestMonthYear = busiest?.year
     }
 
     private static func busiest(_ days: [YearDay]) -> YearDay? {
@@ -195,5 +265,19 @@ extension ContributionYear {
             )
         }
         return ContributionYear(year: year, days: days)
+    }
+}
+
+// MARK: - Year to date
+
+extension ContributionSnapshot {
+    /// Contributions from January 1 to the snapshot's last day, so Home and
+    /// the widget match the year sheet. Data without daily counts, or that
+    /// doesn't reach back to January 1, keeps GitHub's last 12 months until
+    /// the next sync.
+    var yearToDateTotal: Int {
+        guard let year = Int(lastDate.prefix(4)),
+              let data = ContributionYear(snapshot: self, year: year) else { return totalContributions }
+        return data.days.reduce(0) { $0 + $1.count }
     }
 }

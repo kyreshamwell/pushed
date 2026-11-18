@@ -50,7 +50,7 @@ struct PushedWidgetView: View {
             let history = snapshot.history(protection: protection, asOf: now)
             let reading = Reading(
                 history: history,
-                headline: WidgetHeadline(history: history, total: snapshot.totalContributions, stat: stat),
+                headline: WidgetHeadline(history: history, total: snapshot.yearToDateTotal, stat: stat),
                 theme: theme
             )
             GeometryReader { geo in

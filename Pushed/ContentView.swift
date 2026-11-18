@@ -255,7 +255,7 @@ struct HomeView: View {
         return layout {
             statButton(.current, value: history.streak, label: "Current streak")
             statButton(.best, value: history.bestStreak, label: "Best streak")
-            statButton(.year, value: snapshot.totalContributions, label: "This year")
+            statButton(.year, value: snapshot.yearToDateTotal, label: "This year")
         }
         .padding(.horizontal, 16)
     }

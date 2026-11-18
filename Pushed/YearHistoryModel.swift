@@ -14,6 +14,12 @@ final class YearHistoryModel {
 
     /// Oldest first, ending with the current year.
     private(set) var years: [Int]
+
+    /// The switcher's stand-in for GitHub's last 12 months, which sits after the years.
+    static let lastTwelveMonths = -1
+
+    /// What the switcher offers: every year, then the last 12 months.
+    var options: [Int] { years + [Self.lastTwelveMonths] }
     private(set) var phases: [Int: Phase] = [:]
 
     private let username: String
@@ -68,6 +74,11 @@ final class YearHistoryModel {
 
     func load(_ year: Int) async {
         if case .loaded = phases[year] { return }
+        if year == Self.lastTwelveMonths {
+            phases[year] = snapshot.flatMap { YearSummary(lastTwelveMonthsOf: $0, today: now) }
+                .map(Phase.loaded) ?? .failed("Pull to refresh on Home to load your last 12 months.")
+            return
+        }
         guard !inFlight.contains(year) else { return }
         inFlight.insert(year)
         defer { inFlight.remove(year) }
