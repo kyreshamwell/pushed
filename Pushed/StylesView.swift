@@ -7,6 +7,7 @@ import WidgetKit
 struct StylesView: View {
     @Environment(StyleLibraryStore.self) private var store
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dismiss) private var dismiss
 
     let data: PreviewData
 
@@ -75,6 +76,27 @@ struct StylesView: View {
             }
         }) {
             lookList
+        }
+        // With a sheet up, the system back button would pop the page and leave
+        // the sheet to slide away late. This one closes the sheet at once,
+        // then goes back.
+        .navigationBarBackButtonHidden(sheetOpen)
+        .toolbar {
+            if sheetOpen {
+                ToolbarItem(placement: .topBarLeading) {
+                    // Looks like the system back button it stands in for.
+                    Button(action: leave) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chevron.left")
+                                .font(.body.weight(.semibold))
+                            Text("Home")
+                        }
+                        .foregroundStyle(Color.primary)
+                        .padding(.horizontal, 4)
+                    }
+                    .accessibilityLabel("Home")
+                }
+            }
         }
         .navigationTitle("Styles")
         .navigationBarTitleDisplayMode(.inline)
@@ -282,6 +304,8 @@ struct StylesView: View {
         .accessibilityLabel(look.name)
         .accessibilityValue(inRotation ? "In rotation" : "Not in rotation")
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
+        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: inRotation)
+        .sensoryFeedback(.selection, trigger: inRotation)
     }
 
     private var newLookTile: some View {
@@ -497,6 +521,18 @@ struct StylesView: View {
     private func select(_ id: LookID) {
         guard id != selection else { return }
         withAnimation(.easeOut(duration: 0.2)) { selection = id }
+    }
+
+    private var sheetOpen: Bool { showsAllLooks || customizing != nil }
+
+    private func leave() {
+        var instant = Transaction()
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            showsAllLooks = false
+            customizing = nil
+        }
+        DispatchQueue.main.async { dismiss() }
     }
 
     private func toggleRotation(_ id: LookID, keepSelection: Bool = false) {
