@@ -1,8 +1,9 @@
 import SwiftUI
 import WidgetKit
 
-/// Picking, rotating and customizing looks, all in one place. Tapping a card
-/// previews it; the circle on a card adds it to the rotation or takes it out.
+/// Picking, rotating and customizing looks, all in one place. The looks sit
+/// in a stack like cards in Wallet: tap it to fan them out, tap one to show
+/// it, and the circle on a card adds it to the rotation or takes it out.
 struct StylesView: View {
     @Environment(StyleLibraryStore.self) private var store
     @Environment(\.colorScheme) private var colorScheme
@@ -17,7 +18,6 @@ struct StylesView: View {
     @State private var draft: CustomWidgetStyle?
     @State private var deleting: SavedStyle?
     @State private var showsRotationInfo = false
-    @State private var scrollTarget: LookID?
     @State private var rotationTaps = 0
     @State private var saves = 0
 
@@ -28,6 +28,8 @@ struct StylesView: View {
 
     /// Room under the preview for the Customize sheet, from the screen's height.
     @State private var sheetRoom: CGFloat = 460
+    /// Every look fanned out, Wallet style.
+    @State private var showsAllLooks = false
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -38,7 +40,10 @@ struct StylesView: View {
                 sizeSwitch
                     .padding(.bottom, 18)
                 looksHeader
-                looksRow
+                lookDeck
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 18)
                 rotationCard
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
@@ -58,6 +63,13 @@ struct StylesView: View {
         }
         }
         .background(Color.page)
+        .overlay {
+            if showsAllLooks {
+                lookStack
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+        }
+        .toolbar(showsAllLooks ? .hidden : .visible, for: .navigationBar)
         .navigationTitle("Styles")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $customizing, onDismiss: { draft = nil }) { target in
@@ -144,7 +156,7 @@ struct StylesView: View {
             Text("Looks")
                 .font(.title3.weight(.bold))
             Spacer()
-            Text("Tap to preview · circle to rotate")
+            Text("\(allLooks.count) looks")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -152,63 +164,135 @@ struct StylesView: View {
         .padding(.bottom, 2)
     }
 
-    private var looksRow: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 12) {
-                    ForEach(WidgetStyle.builtIn) { style in
-                        card(.builtIn(style), look: WidgetLook(style))
-                            .contextMenu { builtInMenu(style) }
+    private var allLooks: [(id: LookID, look: WidgetLook)] {
+        WidgetStyle.builtIn.map { (LookID.builtIn($0), WidgetLook($0)) }
+            + store.library.styles.map { (LookID.saved($0.id), WidgetLook($0)) }
+    }
+
+    /// The other looks stacked like cards in Wallet, their tops peeking out.
+    /// Tapping the stack fans every look out.
+    private var lookDeck: some View {
+        let others = Array(allLooks.filter { $0.id != selection }.prefix(3))
+        return Button(action: openStack) {
+            VStack(spacing: 10) {
+                ZStack(alignment: .top) {
+                    ForEach(Array(others.enumerated()), id: \.element.id) { index, item in
+                        DeckCardTop(look: item.look, isInRotation: store.library.isInRotation(item.id), data: data)
+                            .padding(.horizontal, CGFloat(others.count - 1 - index) * 8)
+                            .offset(y: CGFloat(index) * DeckCardTop.peek)
+                            .zIndex(Double(index))
                     }
-                    ForEach(store.library.styles) { saved in
-                        card(.saved(saved.id), look: WidgetLook(saved))
-                            .contextMenu { savedMenu(saved) }
-                    }
-                    newCard
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 14)
-                .padding(.bottom, 16)
+                .frame(height: DeckCardTop.height + CGFloat(max(others.count - 1, 0)) * DeckCardTop.peek, alignment: .top)
+                .clipped()
+                Text("See all \(allLooks.count) looks")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
-            .onChange(of: scrollTarget) { _, target in
-                guard let target else { return }
-                withAnimation(.snappy) { proxy.scrollTo(target, anchor: .center) }
-                scrollTarget = nil
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableStyle(scale: 0.98))
+        .accessibilityLabel("See all \(allLooks.count) looks")
+    }
+
+    /// Every look as a card, overlapping like a Wallet stack. Tap one to show it.
+    private var lookStack: some View {
+        GeometryReader { geo in
+            let width = geo.size.width - 32
+            let scale = (width - 16) / WidgetPreviewCard.size(for: .systemMedium).width
+            let cardHeight = 52 + WidgetPreviewCard.size(for: .systemMedium).height * scale + 8
+            let step: CGFloat = 70
+            ZStack(alignment: .top) {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(Color.black.opacity(colorScheme == .dark ? 0.55 : 0.08))
+                    .ignoresSafeArea()
+                    .onTapGesture(perform: closeStack)
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("Choose a look")
+                            .font(.title3.weight(.bold))
+                        Spacer()
+                        Button("Done", action: closeStack)
+                            .font(.body.weight(.semibold))
+                            .frame(minHeight: 44)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 6)
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            ForEach(Array(allLooks.enumerated()), id: \.element.id) { index, item in
+                                WalletCard(
+                                    look: item.look,
+                                    isSelected: selection == item.id,
+                                    isInRotation: store.library.isInRotation(item.id),
+                                    data: data,
+                                    scale: scale,
+                                    select: { pickFromStack(item.id) },
+                                    toggle: { toggleRotation(item.id, keepSelection: true) }
+                                )
+                                .frame(height: cardHeight)
+                                .contextMenu { stackMenu(item.id) }
+                                // Each card takes room for its top only and runs on
+                                // under the next one; the last card shows whole.
+                                .frame(height: index == allLooks.count - 1 ? cardHeight : step, alignment: .top)
+                                .zIndex(Double(index))
+                            }
+                            newLookButton
+                                .padding(.top, 16)
+                                .zIndex(Double(allLooks.count))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 10)
+                        .padding(.bottom, 32)
+                    }
+                    .scrollIndicators(.hidden)
+                }
             }
         }
     }
 
-    private func card(_ id: LookID, look: WidgetLook) -> some View {
-        LookCard(
-            look: look,
-            isSelected: selection == id,
-            isInRotation: store.library.isInRotation(id),
-            data: data,
-            select: { select(id) },
-            toggle: { toggleRotation(id) }
-        )
-        .equatable()
-        .id(id)
+    @ViewBuilder
+    private func stackMenu(_ id: LookID) -> some View {
+        switch id {
+        case .builtIn(let style): builtInMenu(style)
+        case .saved(let uuid):
+            if let saved = store.library.styles.first(where: { $0.id == uuid }) { savedMenu(saved) }
+        }
     }
 
-    private var newCard: some View {
-        Button(action: createLook) {
-            VStack(spacing: 4) {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .semibold))
-                Text("New")
-                    .font(.caption.weight(.semibold))
-            }
-            .foregroundStyle(.secondary)
-            .frame(width: 92, height: 92)
-            .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color(uiColor: .separator), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-            }
+    private var newLookButton: some View {
+        Button {
+            closeStack()
+            createLook()
+        } label: {
+            Label("New look", systemImage: "plus")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 56)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(Color(uiColor: .separator), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                }
         }
         .buttonStyle(PressableStyle())
         .disabled(!store.library.canAdd)
-        .accessibilityLabel("New look")
+    }
+
+    private func openStack() {
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) { showsAllLooks = true }
+    }
+
+    private func closeStack() {
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) { showsAllLooks = false }
+    }
+
+    private func pickFromStack(_ id: LookID) {
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            selection = id
+            showsAllLooks = false
+        }
     }
 
     @ViewBuilder
@@ -406,11 +490,11 @@ struct StylesView: View {
         withAnimation(.easeOut(duration: 0.2)) { selection = id }
     }
 
-    private func toggleRotation(_ id: LookID) {
+    private func toggleRotation(_ id: LookID, keepSelection: Bool = false) {
         rotationTaps += 1
         withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
             store.update { $0.toggleRotation(id) }
-            selection = id
+            if !keepSelection { selection = id }
         }
     }
 
@@ -420,7 +504,6 @@ struct StylesView: View {
         guard let created else { return }
         let id = LookID.saved(created)
         withAnimation(.easeOut(duration: 0.2)) { selection = id }
-        scrollTarget = id
         customizing = CustomizeTarget(id: id, original: store.library[created]?.style ?? .default)
     }
 
@@ -434,7 +517,6 @@ struct StylesView: View {
         customizing = nil
         self.draft = nil
         withAnimation(.easeOut(duration: 0.2)) { selection = id }
-        scrollTarget = id
     }
 
     private func duplicate(_ id: UUID) {
@@ -444,7 +526,6 @@ struct StylesView: View {
         }
         guard let copy else { return }
         select(.saved(copy))
-        scrollTarget = .saved(copy)
     }
 
     private func delete(_ id: UUID) {
@@ -452,7 +533,6 @@ struct StylesView: View {
             store.update { $0.remove(id) }
             if selection == .saved(id) {
                 selection = .builtIn(.classic)
-                scrollTarget = selection
             }
         }
     }
@@ -462,62 +542,6 @@ struct StylesView: View {
 struct CustomizeTarget: Identifiable {
     let id: LookID
     let original: CustomWidgetStyle
-}
-
-/// One look in the row: the real widget in miniature with its name, and the
-/// circle that adds it to the rotation.
-struct LookCard: View, Equatable {
-    let look: WidgetLook
-    let isSelected: Bool
-    let isInRotation: Bool
-    let data: PreviewData
-    let select: () -> Void
-    let toggle: () -> Void
-
-    static func == (lhs: LookCard, rhs: LookCard) -> Bool {
-        lhs.look == rhs.look && lhs.isSelected == rhs.isSelected
-            && lhs.isInRotation == rhs.isInRotation && lhs.data == rhs.data
-    }
-
-    var body: some View {
-        Button(action: select) {
-            VStack(spacing: 8) {
-                ScaledWidget(look: look, family: .systemSmall, scale: 92 / 170, data: data)
-                    .frame(width: 92, height: 92)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
-                    }
-                    .overlay {
-                        if isSelected {
-                            RoundedRectangle(cornerRadius: 20.5, style: .continuous)
-                                .strokeBorder(Color.primary, lineWidth: 2)
-                                .padding(-4.5)
-                                .transition(.opacity)
-                        }
-                    }
-                Text(look.name)
-                    .font(.system(size: 13, weight: isSelected ? .bold : .medium))
-                    .foregroundStyle(isSelected ? Color.primary : Color.secondary)
-                    .lineLimit(1)
-            }
-            .frame(width: 96)
-        }
-        .buttonStyle(PressableStyle())
-        .accessibilityLabel("Preview \(look.name)")
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .overlay(alignment: .topTrailing) {
-            Button(action: toggle) {
-                RotationCircle(isOn: isInRotation)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(PressableStyle(scale: 0.88))
-            .offset(x: 12, y: -10)
-            .accessibilityLabel(isInRotation ? "Remove \(look.name) from rotation" : "Add \(look.name) to rotation")
-        }
-    }
 }
 
 /// Green with a check when the look is in the rotation, an empty ring when not.
@@ -541,5 +565,124 @@ struct RotationCircle: View {
         .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
         .scaleEffect(isOn ? 1 : 0.94)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isOn)
+    }
+}
+
+/// A look's card in the closed stack: its name, whether it's in the
+/// rotation, and the top of the widget wearing it.
+struct DeckCardTop: View {
+    @Environment(\.colorScheme) private var colorScheme
+    let look: WidgetLook
+    let isInRotation: Bool
+    let data: PreviewData
+
+    /// How much of each card behind shows: just its name.
+    static let peek: CGFloat = 36
+    /// The front card, cut off partway down its widget.
+    static let height: CGFloat = 120
+
+    var body: some View {
+        let scheme = look.style.pinnedColorScheme(custom: look.custom) ?? colorScheme
+        let theme = look.style.theme(for: scheme, custom: look.custom)
+        GeometryReader { geo in
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text(look.name)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(theme.primaryText)
+                        .lineLimit(1)
+                    Spacer()
+                    if isInRotation {
+                        Text("In rotation")
+                            .font(.caption)
+                            .foregroundStyle(theme.secondaryText)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .frame(height: Self.peek)
+                ScaledWidget(
+                    look: look, family: .systemMedium,
+                    scale: (geo.size.width - 16) / WidgetPreviewCard.size(for: .systemMedium).width,
+                    data: data
+                )
+                .padding(.horizontal, 8)
+            }
+        }
+        .frame(height: Self.height)
+        .background {
+            WidgetBackground(style: look.style, custom: look.custom)
+                .environment(\.colorScheme, scheme)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.4), radius: 10, y: -4)
+        .accessibilityHidden(true)
+    }
+}
+
+/// One look in the fanned-out stack: its name on top, like a card in Wallet,
+/// and the real widget wearing it underneath.
+struct WalletCard: View {
+    @Environment(\.colorScheme) private var colorScheme
+    let look: WidgetLook
+    let isSelected: Bool
+    let isInRotation: Bool
+    let data: PreviewData
+    let scale: CGFloat
+    let select: () -> Void
+    let toggle: () -> Void
+
+    var body: some View {
+        let scheme = look.style.pinnedColorScheme(custom: look.custom) ?? colorScheme
+        let theme = look.style.theme(for: scheme, custom: look.custom)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Text(look.name)
+                    .font(.headline)
+                    .foregroundStyle(theme.primaryText)
+                    .lineLimit(1)
+                if isSelected {
+                    Text("Showing")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.pushedGreen, in: Capsule())
+                }
+                Spacer(minLength: 0)
+                Button(action: toggle) {
+                    RotationCircle(isOn: isInRotation)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableStyle(scale: 0.88))
+                .accessibilityLabel(isInRotation ? "Remove \(look.name) from rotation" : "Add \(look.name) to rotation")
+            }
+            .padding(.leading, 16)
+            .padding(.trailing, 6)
+            .frame(height: 52)
+            ScaledWidget(look: look, family: .systemMedium, scale: scale, data: data)
+                .padding(.horizontal, 8)
+                .accessibilityHidden(true)
+        }
+        .padding(.bottom, 8)
+        .background {
+            WidgetBackground(style: look.style, custom: look.custom)
+                .environment(\.colorScheme, scheme)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Color.white.opacity(isSelected ? 0.5 : 0.1), lineWidth: isSelected ? 2 : 1)
+        }
+        .shadow(color: .black.opacity(0.45), radius: 14, y: -6)
+        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .onTapGesture(perform: select)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Show \(look.name)")
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }

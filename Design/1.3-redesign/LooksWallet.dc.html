@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Looks, Wallet style</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3FD26A}
+button{font-family:inherit}
+.pz-card{transition:top .38s cubic-bezier(.2,.8,.2,1), transform .38s cubic-bezier(.2,.8,.2,1), opacity .25s ease}
+.pz-press:active{transform:scale(0.97)}
+.pz-scroll{scrollbar-width:none}
+.pz-scroll::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #000000; color: #F5F5F7; font-family: Inter, -apple-system, system-ui, sans-serif">
+  <div style="height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <span style="display: flex; align-items: center; gap: 2px; font-size: 17px; color: #3FD26A; height: 44px; padding: 0 8px">
+      <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"></path></svg>
+      <span>Home</span>
+    </span>
+    <span style="font-size: 17px; font-weight: 600">Styles</span>
+    <span style="width: 76px"></span>
+  </div>
+
+  <div style="height: 230px; display: flex; align-items: center; justify-content: center">
+    <div style="filter: drop-shadow(0 18px 30px rgba(0,0,0,0.55))">
+      <dc-import name="Widget" look="{{sel}}" family="medium" hint-size="364px,170px"></dc-import>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 4px 20px 12px">
+    <span style="font-size: 20px; font-weight: 700">Looks</span>
+    <span style="font-size: 13px; color: #8E8E93">{{lookCount}}</span>
+  </div>
+
+  <button type="button" onClick="{{open}}" aria-label="Show all looks" class="pz-press" style="display: block; width: 358px; margin: 0 16px; height: 150px; position: relative; border: 0; padding: 0; background: transparent; cursor: pointer; text-align: left">
+    <sc-for list="{{peek}}" as="pk" hint-placeholder-count="3">
+      <div style="position: absolute; left: {{pk.inset}}px; right: {{pk.inset}}px; top: {{pk.top}}px; height: 120px; border-radius: 18px; background: {{pk.bg}}; box-shadow: 0 -1px 0 rgba(255,255,255,0.10), 0 10px 24px rgba(0,0,0,0.5); overflow: hidden">
+        <div style="height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px">
+          <span style="font-size: 15px; font-weight: 700; color: {{pk.ink}}">{{pk.name}}</span>
+          <span style="font-size: 12px; color: {{pk.sub}}">{{pk.tag}}</span>
+        </div>
+      </div>
+    </sc-for>
+    <span style="position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 13px; color: #8E8E93">Tap to see every look</span>
+  </button>
+
+  <div style="margin: 18px 16px 0; background: #1C1C1E; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <span style="font-size: 15px; font-weight: 600">Rotation</span>
+      <span style="font-size: 12px; color: #8E8E93">{{rotNote}}</span>
+    </div>
+    <div class="pz-scroll" style="display: flex; gap: 8px; overflow-x: auto">
+      <sc-for list="{{rotChips}}" as="r" hint-placeholder-count="3">
+        <div style="flex: none; display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 6px; border-radius: 17px; background: #242426">
+          <span style="width: 22px; height: 22px; border-radius: 11px; background: {{r.dot}}; border: 1px solid rgba(255,255,255,0.12)"></span>
+          <span style="font-size: 12px; font-weight: 600; color: {{r.dayInk}}">{{r.day}}</span>
+          <span style="font-size: 12px; color: #D1D1D6">{{r.name}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="padding: 16px 16px 0">
+    <div style="width: 100%; height: 50px; border-radius: 14px; background: #F5F5F7; color: #000; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <span>Customize {{selName}}</span>
+    </div>
+  </div>
+
+  <sc-if value="{{expanded}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px)"></div>
+    <div style="position: absolute; left: 0; right: 0; top: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px">
+      <span style="font-size: 20px; font-weight: 700">Choose a look</span>
+      <button type="button" onClick="{{close}}" style="border: 0; background: transparent; color: #3FD26A; font-size: 17px; font-weight: 600; height: 44px; cursor: pointer">Done</button>
+    </div>
+    <div class="pz-scroll" style="position: absolute; left: 0; right: 0; top: 64px; bottom: 0; overflow-y: auto">
+      <div style="position: relative; height: {{stackHeight}}px; margin: 0 16px">
+        <sc-for list="{{cards}}" as="c" hint-placeholder-count="6">
+          <div class="pz-card" style="position: absolute; left: 0; right: 0; top: {{c.top}}px; height: 212px; border-radius: 20px; background: {{c.bg}}; box-shadow: 0 -1px 0 rgba(255,255,255,0.12), 0 -8px 24px rgba(0,0,0,0.55); overflow: hidden">
+            <div style="height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px">
+              <button type="button" onClick="{{c.pick}}" style="flex: 1; height: 48px; border: 0; background: transparent; padding: 0; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px">
+                <span style="font-size: 16px; font-weight: 700; color: {{c.ink}}">{{c.name}}</span>
+                <sc-if value="{{c.isSel}}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size: 11px; font-weight: 700; color: #04150A; background: #3FD26A; border-radius: 9px; padding: 2px 8px">Showing</span>
+                </sc-if>
+              </button>
+              <button type="button" onClick="{{c.toggle}}" aria-label="{{c.toggleLabel}}" style="width: 44px; height: 44px; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0">
+                <span style="width: 24px; height: 24px; border-radius: 12px; background: {{c.chkBg}}; border: 2px solid {{c.chkRing}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center">
+                  <sc-if value="{{c.inRot}}" hint-placeholder-val="{{ false }}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+                  </sc-if>
+                </span>
+              </button>
+            </div>
+            <button type="button" onClick="{{c.pick}}" aria-label="Show {{c.name}}" style="display: block; border: 0; padding: 0 0 0 12px; background: transparent; cursor: pointer">
+              <div style="width: 334px; height: 156px; overflow: hidden">
+                <div style="transform: scale(0.9176); transform-origin: top left">
+                  <dc-import name="Widget" look="{{c.id}}" family="medium" hint-size="364px,170px"></dc-import>
+                </div>
+              </div>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+      <div style="height: 32px"></div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'classic', expanded: false, rot: ['classic', 'aurora', 'ember'] };
+  }
+  renderVals() {
+    const s = this.state;
+    const META = {
+      classic: { name: 'Classic', bg: '#0D1117', ink: '#E6EDF3', sub: '#8B949E', dot: '#26A641' },
+      aurora: { name: 'Aurora', bg: 'linear-gradient(135deg, #12354A, #0A0F24 55%, #2A2252)', ink: '#F2F5FF', sub: 'rgba(226,232,255,0.66)', dot: 'linear-gradient(135deg, #2DD4BF, #A78BFA)' },
+      ember: { name: 'Ember', bg: 'linear-gradient(135deg, #2A140B, #140B08 60%)', ink: '#FFF4E8', sub: 'rgba(253,200,150,0.72)', dot: 'linear-gradient(135deg, #FFC46B, #F2761B)' },
+      terminal: { name: 'Terminal', bg: '#06100A', ink: '#86EFAC', sub: '#4E8F62', dot: '#22C55E' },
+      paper: { name: 'Paper', bg: '#F1EBDF', ink: '#24211D', sub: '#6E6456', dot: '#E2DACB' },
+      marks: { name: 'Marks', bg: '#111113', ink: '#F2F2F2', sub: '#8E8E93', dot: '#F2F2F2' }
+    };
+    const ids = ['classic', 'aurora', 'ember', 'terminal', 'paper', 'marks'];
+
+    // Wallet order: the look on show sits at the front of the stack.
+    const others = ids.filter((id) => id !== s.sel);
+    const peek = others.slice(0, 3).map((id, i) => ({
+      name: META[id].name, bg: META[id].bg, ink: META[id].ink, sub: META[id].sub,
+      tag: s.rot.indexOf(id) >= 0 ? 'In rotation' : '',
+      top: i * 16, inset: (2 - i) * 8
+    }));
+
+    const step = 64;
+    const cards = ids.map((id, i) => {
+      const inRot = s.rot.indexOf(id) >= 0;
+      return {
+        id, name: META[id].name, bg: META[id].bg, ink: META[id].ink,
+        top: i * step, isSel: id === s.sel, inRot,
+        chkBg: inRot ? '#3FD26A' : 'rgba(0,0,0,0.35)',
+        chkRing: inRot ? '#3FD26A' : 'rgba(255,255,255,0.7)',
+        toggleLabel: (inRot ? 'Remove ' : 'Add ') + META[id].name + (inRot ? ' from rotation' : ' to rotation'),
+        pick: () => this.setState({ sel: id, expanded: false }),
+        toggle: () => this.setState({ rot: inRot ? s.rot.filter((x) => x !== id) : s.rot.concat([id]) })
+      };
+    });
+
+    const days = ['Today', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'];
+    const n = s.rot.length;
+    return {
+      sel: s.sel, selName: META[s.sel].name, expanded: s.expanded,
+      lookCount: ids.length + ' looks',
+      peek, cards, stackHeight: (ids.length - 1) * step + 212,
+      rotChips: s.rot.map((id, i) => ({ day: days[i % 7], name: META[id].name, dot: META[id].dot, dayInk: i === 0 ? '#3FD26A' : '#8E8E93' })),
+      rotNote: n === 0 ? 'Off' : n === 1 ? 'Stays on one look' : n + ' looks · changes at midnight',
+      open: () => this.setState({ expanded: true }),
+      close: () => this.setState({ expanded: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
