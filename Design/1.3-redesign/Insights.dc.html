@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Streak and year screens</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 1400px; height: 1040px; box-sizing: border-box; padding: 48px 56px; background: #0B0B0C; color: #F5F5F7; font-family: Inter, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <h1 style="margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -0.03em">Tap a stat, see the story</h1>
+    <p style="margin: 0; font-size: 16px; color: #A1A1A6; max-width: 980px; line-height: 1.5">Each tile on Home opens a sheet. Current streak shows the run day by day, Best streak shows when it happened, and This year breaks it down by month. Past years come from GitHub with the token you already have. Tap a year or a month on the right to try it.</p>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 13px; font-weight: 600; color: #8E8E93; letter-spacing: 0.06em; text-transform: uppercase">Current streak</span>
+      <div style="width: 390px; height: 844px; border-radius: 44px; background: #000; overflow: hidden; position: relative; box-shadow: 0 0 0 1px #2C2C2E">
+        <div style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; background: #1C1C1E; border-radius: 28px 28px 0 0; padding: 8px 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; justify-content: center"><span style="width: 36px; height: 5px; border-radius: 3px; background: #48484A"></span></div>
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-size: 17px; font-weight: 600">Current streak</span>
+            <span style="font-size: 17px; font-weight: 600; color: #3FD26A">Done</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <div style="display: flex; align-items: baseline; gap: 8px">
+              <span style="font-size: 64px; font-weight: 800; letter-spacing: -0.04em; line-height: 1">12</span>
+              <span style="font-size: 20px; font-weight: 600; color: #A1A1A6">days</span>
+            </div>
+            <span style="font-size: 15px; color: #A1A1A6">Since Monday, Nov 2</span>
+          </div>
+          <div style="background: #2C2C2E; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 15px; font-weight: 600">November 2026</span>
+            <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+              <sc-for list="{{weekdayLetters}}" as="w" hint-placeholder-count="7">
+                <span style="text-align: center; font-size: 11px; font-weight: 600; color: #8E8E93">{{w}}</span>
+              </sc-for>
+              <sc-for list="{{nov}}" as="d" hint-placeholder-count="35">
+                <div style="height: 38px; border-radius: 9px; background: {{d.bg}}; color: {{d.ink}}; outline: {{d.ring}}; outline-offset: 2px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: {{d.weight}}; opacity: {{d.op}}">{{d.label}}</div>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 14px; font-size: 11px; color: #8E8E93">
+              <span>R rest day</span><span>F freeze</span><span>Ring is today</span>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+            <div style="background: #2C2C2E; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 22px; font-weight: 800">38</span><span style="font-size: 12px; color: #8E8E93">Contributions</span></div>
+            <div style="background: #2C2C2E; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 22px; font-weight: 800">4</span><span style="font-size: 12px; color: #8E8E93">Rest days</span></div>
+            <div style="background: #2C2C2E; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 22px; font-weight: 800">1</span><span style="font-size: 12px; color: #8E8E93">Freeze used</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="font-weight: 600">Next milestone: 14 days</span><span style="color: #8E8E93">2 to go</span></div>
+            <div style="height: 8px; border-radius: 4px; background: #2C2C2E; overflow: hidden"><div style="width: 86%; height: 100%; background: #3FD26A; border-radius: 4px"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 13px; font-weight: 600; color: #8E8E93; letter-spacing: 0.06em; text-transform: uppercase">Best streak</span>
+      <div style="width: 390px; height: 844px; border-radius: 44px; background: #000; overflow: hidden; position: relative; box-shadow: 0 0 0 1px #2C2C2E">
+        <div style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; background: #1C1C1E; border-radius: 28px 28px 0 0; padding: 8px 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; justify-content: center"><span style="width: 36px; height: 5px; border-radius: 3px; background: #48484A"></span></div>
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-size: 17px; font-weight: 600">Best streak</span>
+            <span style="font-size: 17px; font-weight: 600; color: #3FD26A">Done</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <div style="display: flex; align-items: baseline; gap: 8px">
+              <span style="font-size: 64px; font-weight: 800; letter-spacing: -0.04em; line-height: 1">41</span>
+              <span style="font-size: 20px; font-weight: 600; color: #A1A1A6">days</span>
+            </div>
+            <span style="font-size: 15px; color: #A1A1A6">Mar 3 to Apr 12, 2026</span>
+          </div>
+          <sc-for list="{{bestMonths}}" as="m" hint-placeholder-count="2">
+            <div style="background: #2C2C2E; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 14px; font-weight: 600">{{m.name}}</span>
+              <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px">
+                <sc-for list="{{m.days}}" as="d" hint-placeholder-count="35">
+                  <div style="height: 24px; border-radius: 6px; background: {{d.bg}}; color: {{d.ink}}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; opacity: {{d.op}}">{{d.label}}</div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="font-weight: 600">You're at 12</span><span style="color: #8E8E93">30 more days to beat it</span></div>
+            <div style="height: 8px; border-radius: 4px; background: #2C2C2E; overflow: hidden"><div style="width: 29%; height: 100%; background: #3FD26A; border-radius: 4px"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 13px; font-weight: 600; color: #8E8E93; letter-spacing: 0.06em; text-transform: uppercase">This year (tap to try)</span>
+      <div style="width: 390px; height: 844px; border-radius: 44px; background: #000; overflow: hidden; position: relative; box-shadow: 0 0 0 1px #2C2C2E">
+        <div style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; background: #1C1C1E; border-radius: 28px 28px 0 0; padding: 8px 20px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+          <div style="display: flex; justify-content: center"><span style="width: 36px; height: 5px; border-radius: 3px; background: #48484A"></span></div>
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-size: 17px; font-weight: 600">Your year</span>
+            <span style="font-size: 17px; font-weight: 600; color: #3FD26A">Done</span>
+          </div>
+          <div style="display: flex; background: #2C2C2E; border-radius: 10px; padding: 2px">
+            <sc-for list="{{yearTabs}}" as="y" hint-placeholder-count="3">
+              <button type="button" onClick="{{y.pick}}" style="flex: 1; height: 32px; border: 0; border-radius: 8px; background: {{y.bg}}; color: {{y.ink}}; font-size: 13px; font-weight: 600; cursor: pointer">{{y.label}}</button>
+            </sc-for>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+            <sc-for list="{{summary}}" as="t" hint-placeholder-count="4">
+              <div style="background: #2C2C2E; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 22px; font-weight: 800; letter-spacing: -0.02em">{{t.value}}</span><span style="font-size: 12px; color: #8E8E93">{{t.label}}</span></div>
+            </sc-for>
+          </div>
+          <span style="font-size: 13px; font-weight: 600; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.04em">By month</span>
+          <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-bottom: 24px">
+            <sc-for list="{{months}}" as="m" hint-placeholder-count="12">
+              <div style="background: #2C2C2E; border-radius: 12px; overflow: hidden">
+                <button type="button" onClick="{{m.toggle}}" style="width: 100%; border: 0; background: transparent; color: #F5F5F7; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; opacity: {{m.op}}">
+                  <span style="width: 32px; text-align: left; font-size: 13px; font-weight: 600">{{m.short}}</span>
+                  <div style="flex: 1; height: 8px; border-radius: 4px; background: #3A3A3C; overflow: hidden"><div style="width: {{m.pct}}%; height: 100%; background: #3FD26A; border-radius: 4px"></div></div>
+                  <span style="width: 44px; text-align: right; font-size: 13px; font-weight: 600">{{m.total}}</span>
+                </button>
+                <sc-if value="{{m.open}}" hint-placeholder-val="{{ false }}">
+                  <div style="padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px">
+                    <div style="display: grid; grid-template-rows: repeat(7, 9px); grid-auto-flow: column; grid-auto-columns: 9px; gap: 3px">
+                      <sc-for list="{{m.cells}}" as="c" hint-placeholder-count="30">
+                        <div style="width: 9px; height: 9px; border-radius: 2px; background: {{c}}"></div>
+                      </sc-for>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 12px; color: #A1A1A6">
+                      <span><b style="color: #F5F5F7; font-size: 15px">{{m.activeDays}}</b><br>active days</span>
+                      <span><b style="color: #F5F5F7; font-size: 15px">{{m.bestDay}}</b><br>busiest day</span>
+                      <span><b style="color: #F5F5F7; font-size: 15px">{{m.run}}</b><br>longest run</span>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1040}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { year: 2026, open: 10 };
+  }
+  renderVals() {
+    const s = this.state;
+    const GREENS = ['#2F3640', '#0E4429', '#006D32', '#26A641', '#39D353'];
+    const rnd = (seed, i) => { const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453; return x - Math.floor(x); };
+    const today = new Date(2026, 10, 18);
+
+    // Current streak calendar: Nov 2 to today, weekends rested, Nov 11 frozen.
+    const firstDow = new Date(2026, 10, 1).getDay();
+    const nov = [];
+    for (let i = 0; i < firstDow; i++) nov.push({ label: '', bg: 'transparent', ink: 'transparent', ring: 'none', weight: 500, op: 1 });
+    for (let d = 1; d <= 30; d++) {
+      const dow = new Date(2026, 10, d).getDay();
+      const weekend = dow === 0 || dow === 6;
+      const inRun = d >= 2 && d <= 18;
+      const future = d > 18;
+      let bg = '#232326', ink = '#8E8E93', label = String(d), weight = 500, op = 1;
+      if (future) { bg = 'transparent'; op = 0.35; }
+      else if (inRun && weekend) { bg = '#3A3A3C'; ink = '#D1D1D6'; label = 'R'; weight = 700; }
+      else if (inRun && d === 11) { bg = '#1E3A4C'; ink = '#7DD3FC'; label = 'F'; weight = 700; }
+      else if (inRun) { const lv = 1 + Math.floor(rnd(3, d) * 4); bg = GREENS[lv]; ink = lv >= 3 ? '#04150A' : '#E6EDF3'; weight = 700; }
+      nov.push({ label, bg, ink, weight, op, ring: d === 18 ? '2px solid #F5F5F7' : 'none' });
+    }
+
+    // Best streak months: Mar 3 to Apr 12 highlighted.
+    const monthGrid = (m, from, to, name) => {
+      const days = [];
+      const dow0 = new Date(2026, m, 1).getDay();
+      const len = new Date(2026, m + 1, 0).getDate();
+      for (let i = 0; i < dow0; i++) days.push({ label: '', bg: 'transparent', ink: 'transparent', op: 1 });
+      for (let d = 1; d <= len; d++) {
+        const run = d >= from && d <= to;
+        const lv = run ? 1 + Math.floor(rnd(7 + m, d) * 4) : 0;
+        days.push({ label: String(d), bg: run ? GREENS[lv] : '#232326', ink: run ? (lv >= 3 ? '#04150A' : '#E6EDF3') : '#636366', op: 1 });
+      }
+      return { name, days };
+    };
+    const bestMonths = [monthGrid(2, 3, 31, 'March 2026'), monthGrid(3, 1, 12, 'April 2026')];
+
+    // A year of sample data, busier each year.
+    const yearData = (y) => {
+      const seed = y - 2000;
+      const growth = (y - 2023) * 0.12;
+      const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      let yearTotal = 0, yearActive = 0, bestRun = 0, run = 0, busiest = 0, busiestName = '';
+      const months = names.map((name, m) => {
+        const len = new Date(y, m + 1, 0).getDate();
+        const cells = [];
+        let total = 0, active = 0, best = 0, bestDayLabel = '', mRun = 0, mBest = 0;
+        const lead = new Date(y, m, 1).getDay();
+        for (let i = 0; i < lead; i++) cells.push('transparent');
+        let future = false;
+        for (let d = 1; d <= len; d++) {
+          const date = new Date(y, m, d);
+          if (date > today) { future = true; cells.push('#232326'); mRun = 0; continue; }
+          const p = 0.35 + growth + (m === 2 || m === 3 ? 0.35 : 0);
+          const lv = rnd(seed, m * 40 + d) < p ? 1 + Math.floor(rnd(seed + 9, m * 40 + d) * 4) : 0;
+          const count = lv ? lv * 2 + Math.floor(rnd(seed + 3, d) * 4) : 0;
+          cells.push(GREENS[lv]);
+          total += count; if (count) { active++; mRun++; run++; } else { mRun = 0; run = 0; }
+          mBest = Math.max(mBest, mRun); bestRun = Math.max(bestRun, run);
+          if (count > best) { best = count; bestDayLabel = name.slice(0, 3) + ' ' + d; }
+        }
+        yearTotal += total; yearActive += active;
+        if (total > busiest) { busiest = total; busiestName = name; }
+        return { short: name.slice(0, 3), total, activeDays: active, bestDay: bestDayLabel || 'None', run: mBest + 'd', cells, future: future && total === 0 };
+      });
+      const max = Math.max(...months.map((mm) => mm.total), 1);
+      return { months, max, yearTotal, yearActive, bestRun, busiestName };
+    };
+
+    const data = yearData(s.year);
+    const months = data.months.map((m, i) => ({
+      ...m,
+      pct: Math.round(m.total / data.max * 100),
+      op: m.future ? 0.4 : 1,
+      open: s.open === i && !m.future,
+      toggle: () => this.setState({ open: s.open === i ? -1 : i })
+    }));
+    const yearTabs = [2024, 2025, 2026].map((y) => ({
+      label: String(y),
+      bg: s.year === y ? '#636366' : 'transparent',
+      ink: s.year === y ? '#FFFFFF' : '#AEAEB2',
+      pick: () => this.setState({ year: y, open: y === 2026 ? 10 : 0 })
+    }));
+    const summary = [
+      { value: data.yearTotal.toLocaleString('en-US'), label: 'Contributions' },
+      { value: String(data.yearActive), label: 'Active days' },
+      { value: data.bestRun + ' days', label: 'Longest run' },
+      { value: data.busiestName, label: 'Busiest month' }
+    ];
+
+    return {
+      weekdayLetters: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+      nov, bestMonths, months, yearTabs, summary
+    };
+  }
+}
+</script>
+</body>
+</html>
