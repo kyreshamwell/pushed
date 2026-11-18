@@ -272,7 +272,10 @@ final class RenderPreviews: XCTestCase {
 
         // A Wednesday: this week has days done and days still to come.
         let now = ContributionCalendar.dateFormatter.date(from: "2026-10-21")!
-        let rested = weekendsOff(.sample(streak: 16, asOf: now), asOf: now)
+        // The run starts after a missed Friday, Oct 2. Its weekdays, less
+        // the frozen Tuesday, make a 12 day streak, the same number the demo
+        // build shows in the app captures.
+        let rested = weekendsOff(.sample(streak: 19, asOf: now), asOf: now)
         var levels = rested.recentLevels
         levels[levels.count - 2] = 0 // Tuesday, covered by the freeze
         let snapshot = ContributionSnapshot(
