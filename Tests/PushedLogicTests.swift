@@ -57,7 +57,7 @@ final class PushedLogicTests: XCTestCase {
     // that aren't the user's fault.
 
     func testMistypedUsernameIsNamedAsSuchNotAsABadToken() {
-        // GraphQL answers 200 with an errors array — the token is fine.
+        // GraphQL answers 200 with an errors array, so the token is fine.
         let json = #"""
         {"data":{"user":null},"errors":[{"type":"NOT_FOUND","path":["user"],
          "message":"Could not resolve to a User with the login of 'kyre-typo'."}]}
@@ -109,7 +109,7 @@ final class PushedLogicTests: XCTestCase {
     }
 
     func testA403WithBudgetLeftIsStillATokenProblem() {
-        // No throttling signal at all — this is the genuinely revoked case, and
+        // No throttling signal at all: this is the genuinely revoked case, and
         // it must keep reaching the user as one.
         let http = response(status: 403, headers: ["x-ratelimit-remaining": "4998"])
         XCTAssertFalse(GitHubContributionsService.isRateLimited(http))
@@ -147,7 +147,7 @@ final class PushedLogicTests: XCTestCase {
     // MARK: - Streak math
 
     func testStreakHoldsWhenTodayHasNoCommitYet() {
-        // 3-day streak through yesterday, nothing today — must show 3, not 0.
+        // 3-day streak through yesterday, nothing today: must show 3, not 0.
         let calendar = makeCalendar(endingOn: "2026-07-07", dayCount: 30, activity: [
             "2026-07-04": (2, "FIRST_QUARTILE"),
             "2026-07-05": (1, "FIRST_QUARTILE"),

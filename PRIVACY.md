@@ -37,8 +37,8 @@ The token Pushed asks for is read-only and scoped to `read:user`, which permits
 reading public profile and contribution information. It cannot push code, read
 private repositories, or modify your account.
 
-It is held in the iOS Keychain — the same encrypted store iOS uses for saved
-passwords — and is shared only with the app's own widget extension so the widget
+It is held in the iOS Keychain (the same encrypted store iOS uses for saved
+passwords) and is shared only with the app's own widget extension so the widget
 can refresh itself.
 
 ## Notifications

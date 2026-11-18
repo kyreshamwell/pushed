@@ -43,7 +43,7 @@ struct ContributionCalendar {
         let byDate = Dictionary(uniqueKeysWithValues: days.map { ($0.date, $0.contributionCount) })
         let formatter = ContributionCalendar.dateFormatter
 
-        // If today has no contribution yet, that's fine — start counting from yesterday
+        // If today has no contribution yet, that's fine: start counting from yesterday
         // so a streak in progress doesn't reset to 0 before the day is over.
         if let count = byDate[formatter.string(from: cursor)], count > 0 {
             streak += 1
@@ -70,7 +70,7 @@ struct ContributionCalendar {
 enum GitHubServiceError: Error, Equatable {
     case missingCredentials
     case requestFailed
-    /// The token was rejected — expired or revoked. Distinct from a network
+    /// The token was rejected (expired or revoked). Distinct from a network
     /// blip because it's the one failure the user has to act on, and the one
     /// that must silence commit nudges (data we can't read can't be nagged about).
     case unauthorized
@@ -86,7 +86,7 @@ enum GitHubServiceError: Error, Equatable {
     case decodingFailed
 }
 
-/// A fetch carries the token's own lifecycle alongside the contribution data —
+/// A fetch carries the token's own lifecycle alongside the contribution data.
 /// GitHub reports the expiry date on every authenticated response, so the
 /// 10/5/1-day warnings cost no extra request.
 struct CalendarFetch {
@@ -160,7 +160,7 @@ enum GitHubContributionsService {
 
     /// GitHub has shipped this header in more than one shape over the years, so
     /// try the known formats rather than trusting one. An unparseable value
-    /// degrades to "no expiry known", which just means no early warnings —
+    /// degrades to "no expiry known", which just means no early warnings,
     /// never a wrong date.
     static func parseTokenExpiry(_ raw: String?) -> Date? {
         guard let raw = raw?.trimmingCharacters(in: .whitespaces), !raw.isEmpty else { return nil }

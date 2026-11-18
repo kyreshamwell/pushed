@@ -27,7 +27,7 @@ struct ContributionGridView: View {
         }
     }
 
-    /// (column, "Jan") pairs — one label wherever a column starts a new month.
+    /// (column, "Jan") pairs: one label wherever a column starts a new month.
     private var monthLabels: [(col: Int, text: String)] {
         guard showsLabels, let endDate else { return [] }
         let cal = Calendar(identifier: .gregorian)
@@ -103,7 +103,7 @@ struct ContributionGridView: View {
             let spacing = max(0.8, min(2.5, availW / CGFloat(max(columns, 1)) * 0.18)) * theme.spacing
             let rawW = (availW - spacing * CGFloat(max(columns - 1, 0))) / CGFloat(max(columns, 1))
             let rawH = (availH - spacing * 6) / 7
-            // True squares, like GitHub — sized by whichever dimension is tighter.
+            // True squares, like GitHub's, sized by whichever dimension is tighter.
             let cellW = max(1, min(rawW, rawH))
             let cellH = cellW
             let stepX = cellW + spacing

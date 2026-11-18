@@ -8,7 +8,7 @@
 #   - the commit is on the repo's default branch
 #   - the repo is owned by (or has the account as a collaborator) and is NOT a fork
 #   - if the repo is private, "Include private contributions on my profile" is on
-#     in the account's profile settings — otherwise use a public repo
+#     in the account's profile settings; otherwise use a public repo
 #
 # The author email is passed in and applied per-commit, so your global
 # git config is never touched.
@@ -28,11 +28,11 @@
 #   --dry-run            Print what would happen, change nothing.
 #
 # Examples:
-#   # 21-day streak ending yesterday — the state that makes the app's
+#   # 21-day streak ending yesterday: the state that makes the app's
 #   # "your streak ends at midnight" reminder fire during a recording.
 #   Scripts/seed_demo_commits.sh --email demo@example.com --days 21 --ending-days-ago 1 --push
 #
-#   # One commit today — the "watch the square turn green" beat.
+#   # One commit today, for the "watch the square turn green" beat.
 #   Scripts/seed_demo_commits.sh --email demo@example.com --days 1 --per-day 1 --push
 
 set -euo pipefail
@@ -76,7 +76,7 @@ BRANCH="$(git symbolic-ref --short HEAD)"
 DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || true)"
 
 # Commits only count toward the graph on the default branch, and this script is
-# easy to point at the wrong checkout — so say so rather than producing a
+# easy to point at the wrong checkout, so say so rather than producing a
 # hundred invisible commits.
 if [[ -n "$DEFAULT_BRANCH" && "$BRANCH" != "$DEFAULT_BRANCH" ]]; then
     echo "warning: on '$BRANCH' but origin's default branch is '$DEFAULT_BRANCH'." >&2
@@ -108,7 +108,7 @@ for (( offset = DAYS - 1 + ENDING_DAYS_AGO; offset >= ENDING_DAYS_AGO; offset-- 
     for (( i = 1; i <= COUNT; i++ )); do
         # Spread through the working day so the timestamps aren't all identical.
         STAMP="${DAY}T$(printf '%02d' $(( 9 + (i * 2) % 10 ))):$(printf '%02d' $(( RANDOM % 60 ))):00"
-        LINE="- ${STAMP} — demo activity ${i}/${COUNT}"
+        LINE="- ${STAMP}: demo activity ${i}/${COUNT}"
 
         if $DRY_RUN; then
             echo "would commit: $STAMP"
@@ -134,6 +134,6 @@ if $PUSH && ! $DRY_RUN; then
     echo "Pushed. The contribution graph usually catches up within a minute or two;"
     echo "hit \"Refresh now\" in the app rather than waiting for the widget's own cycle."
 elif ! $DRY_RUN; then
-    echo "Not pushed — nothing counts toward the graph until it reaches GitHub."
+    echo "Not pushed. Nothing counts toward the graph until it reaches GitHub."
     echo "Run: git push origin $BRANCH"
 fi

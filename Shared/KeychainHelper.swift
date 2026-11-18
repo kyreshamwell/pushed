@@ -3,7 +3,7 @@ import Security
 
 // Note: no kSecAttrAccessGroup in these queries. Both targets list the same
 // shared group first in their keychain-access-groups entitlement, so iOS
-// defaults every keychain call to that group — specifying it manually would
+// defaults every keychain call to that group. Specifying it manually would
 // require hardcoding the team ID prefix (e.g. "AB12CD34EF.com...shared").
 enum KeychainHelper {
     /// Returns whether the token actually landed in the Keychain. The caller has

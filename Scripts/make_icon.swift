@@ -10,14 +10,14 @@ import UniformTypeIdentifiers
 //
 // - light:  GitHub light-mode palette on white (default home screens)
 // - dark:   GitHub dark-mode palette on #0d1117 (dark home screens)
-// - tinted: grayscale on transparent — iOS 18 recolors it with the user's tint
+// - tinted: grayscale on transparent, which iOS 18 recolors with the user's tint
 
 let variant = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "dark"
 let outPath = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "icon-\(variant).png"
 
 let size = 1024
 
-// Only the tinted variant is allowed an alpha channel — iOS composites it over
+// Only the tinted variant is allowed an alpha channel: iOS composites it over
 // its own gradient. The App Store icon must be fully opaque, and a light/dark
 // PNG that merely *looks* opaque still trips ITMS-90717 if it carries an alpha
 // channel at all, so those two are rendered without one rather than painted

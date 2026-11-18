@@ -24,7 +24,7 @@ enum ManagedNotification {
     /// Only the day slots get actively cancelled. Milestones and token warnings
     /// are fire-and-forget: once queued they're allowed to ride, because the
     /// plan that produced them stops reproducing them the moment they're
-    /// recorded as celebrated — and re-diffing would silently delete a
+    /// recorded as celebrated, and re-diffing would silently delete a
     /// celebration that's waiting out quiet hours.
     static func isCancellable(_ identifier: String) -> Bool {
         identifier.hasPrefix("daily-")
@@ -40,7 +40,7 @@ struct ReconcileOutcome: Equatable {
 
     /// How long the widget should wait before its next timeline refresh. Inside
     /// the run-up to a slot the cadence tightens, which shrinks the window in
-    /// which you push but the app hasn't noticed yet — the one case that can
+    /// which you push but the app hasn't noticed yet: the one case that can
     /// produce a nudge for something you already did.
     func refreshInterval(now: Date) -> TimeInterval {
         let imminent = planned.contains {
@@ -52,7 +52,7 @@ struct ReconcileOutcome: Equatable {
 
 /// Turns a plan into actual calls on the notification center. Adds anything
 /// planned that isn't already queued, and cancels day slots that the plan no
-/// longer wants — that cancellation is the mechanic that stops "you haven't
+/// longer wants. That cancellation is the mechanic that stops "you haven't
 /// pushed today" from firing after you've pushed.
 struct NotificationScheduler {
     let center: NotificationCentering
@@ -144,8 +144,8 @@ struct SystemNotificationCenter: NotificationCentering {
     nonisolated(unsafe) static var lastAddError: String?
 
     /// An interval trigger counts elapsed seconds, so a token warning queued ten
-    /// days out lands an hour early or late if a DST boundary falls in between —
-    /// the planner deliberately anchors those to 10am and the trigger would
+    /// days out lands an hour early or late if a DST boundary falls in between.
+    /// The planner deliberately anchors those to 10am and the trigger would
     /// quietly move them. Matching on calendar components instead keeps the
     /// wall-clock time the planner chose.
     ///
@@ -164,7 +164,7 @@ struct SystemNotificationCenter: NotificationCentering {
     }
 
     /// Both trigger kinds expose `nextTriggerDate()`, but not through a shared
-    /// type — so anything reading a queued fire time has to ask both.
+    /// type, so anything reading a queued fire time has to ask both.
     static func nextFireDate(of trigger: UNNotificationTrigger?) -> Date? {
         switch trigger {
         case let calendar as UNCalendarNotificationTrigger: return calendar.nextTriggerDate()
@@ -187,7 +187,7 @@ struct SystemNotificationCenter: NotificationCentering {
             .requestAuthorization(options: [.alert, .sound, .badge])) ?? false
     }
 
-    /// Grants quietly, with no permission alert — notifications land in
+    /// Grants quietly, with no permission alert: notifications land in
     /// Notification Center instead of on screen. Used by the headless
     /// self-check so it can exercise the real center without a human tap.
     static func requestProvisionalAuthorization() async -> Bool {

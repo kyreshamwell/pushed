@@ -105,7 +105,7 @@ final class NotificationSchedulerTests: XCTestCase {
             .reconcile(context(lastActiveDaysAgo: 1, streakLength: 12))
 
         XCTAssertTrue(center.removed.isEmpty)
-        XCTAssertTrue(outcome.added.isEmpty, "already pending — must not double-add")
+        XCTAssertTrue(outcome.added.isEmpty, "already pending, so it must not double-add")
     }
 
     func testSweepsYesterdaysLeftoverSlot() async {
