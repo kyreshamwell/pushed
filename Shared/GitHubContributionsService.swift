@@ -121,13 +121,27 @@ enum GitHubContributionsService {
     static let expiryHeader = "github-authentication-token-expiration"
 
     static func fetch(username: String, token: String) async throws -> CalendarFetch {
+        let (data, http) = try await post(query, variables: ["userName": username], token: token)
+        return CalendarFetch(
+            calendar: try parse(data),
+            tokenExpiry: parseTokenExpiry(http.value(forHTTPHeaderField: expiryHeader))
+        )
+    }
+
+    /// Sends one GraphQL query and sorts out the HTTP failures. GraphQL's own
+    /// errors arrive with a 200 and are left to the parser.
+    private static func post(
+        _ query: String,
+        variables: [String: Any],
+        token: String
+    ) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "query": query,
-            "variables": ["userName": username],
+            "variables": variables,
         ])
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -147,15 +161,84 @@ enum GitHubContributionsService {
         guard http.statusCode == 200 else {
             throw GitHubServiceError.requestFailed
         }
-
-        return CalendarFetch(
-            calendar: try parse(data),
-            tokenExpiry: parseTokenExpiry(http.value(forHTTPHeaderField: expiryHeader))
-        )
+        return (data, http)
     }
 
     static func fetchCalendar(username: String, token: String) async throws -> ContributionCalendar {
         try await fetch(username: username, token: token).calendar
+    }
+
+    // MARK: - Past years
+
+    /// One calendar year. GitHub caps a contributions range at a year, so
+    /// each year is its own query.
+    private static let yearQuery = """
+    query($userName: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $userName) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+                contributionLevel
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    private static let joinQuery = """
+    query($userName: String!) {
+      user(login: $userName) {
+        createdAt
+      }
+    }
+    """
+
+    static func fetchYear(_ year: Int, username: String, token: String) async throws -> ContributionYear {
+        let (data, _) = try await post(yearQuery, variables: [
+            "userName": username,
+            "from": String(format: "%04d-01-01T00:00:00Z", year),
+            "to": String(format: "%04d-12-31T23:59:59Z", year),
+        ], token: token)
+        return try parseYear(data, year: year)
+    }
+
+    /// The year the account was made, the earliest one with any data.
+    static func fetchJoinYear(username: String, token: String) async throws -> Int {
+        let (data, _) = try await post(joinQuery, variables: ["userName": username], token: token)
+        return try parseJoinYear(data)
+    }
+
+    static func parseYear(_ data: Data, year: Int) throws -> ContributionYear {
+        ContributionYear(year: year, calendar: try parse(data))
+    }
+
+    static func parseJoinYear(_ data: Data) throws -> Int {
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw GitHubServiceError.decodingFailed
+        }
+        if let errors = json["errors"] as? [[String: Any]], !errors.isEmpty {
+            if errors.contains(where: { ($0["type"] as? String) == "NOT_FOUND" }) {
+                throw GitHubServiceError.userNotFound
+            }
+            throw GitHubServiceError.apiError(
+                (errors.first?["message"] as? String) ?? "GitHub rejected the request."
+            )
+        }
+        guard let dataDict = json["data"] as? [String: Any],
+              let user = dataDict["user"] as? [String: Any],
+              let created = user["createdAt"] as? String,
+              let date = ISO8601DateFormatter().date(from: created) else {
+            throw GitHubServiceError.decodingFailed
+        }
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(identifier: "UTC") ?? .current
+        return utc.component(.year, from: date)
     }
 
     /// GitHub has shipped this header in more than one shape over the years, so

@@ -12,6 +12,9 @@ struct ContributionSnapshot: Codable {
     /// Contributions on the last day, as GitHub counts them. Nil for data
     /// saved before 1.3, which only kept the levels.
     var lastDayCount: Int? = nil
+    /// Contributions on each day of `recentLevels`, lined up with it. Nil for
+    /// data saved before the streak and year screens, which only kept levels.
+    var recentCounts: [Int]? = nil
 
     static let defaultsKey = "latest-contribution-snapshot"
 
@@ -35,13 +38,15 @@ struct ContributionSnapshot: Codable {
         let weeksToKeep = min(fullWeekCount, 52)
         let start = max(0, days.count - trailingPartial - weeksToKeep * 7)
         let recent = days[start...].map(\.level)
+        let counts = days[start...].map(\.contributionCount)
 
         return ContributionSnapshot(
             totalContributions: calendar.totalContributions,
             recentLevels: Array(recent),
             lastDate: days.last?.date ?? "",
             fetchedAt: Date(),
-            lastDayCount: days.last?.contributionCount
+            lastDayCount: days.last?.contributionCount,
+            recentCounts: Array(counts)
         )
     }
 
