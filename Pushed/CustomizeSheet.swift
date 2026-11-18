@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The half-height sheet for changing a look, so the preview above it stays
+/// The sheet for changing a look, sized to its content, so the preview above it stays
 /// in view. A built-in look is changed as a copy and kept with "Save as my
 /// look"; a saved look changes as you go.
 struct CustomizeSheet: View {
@@ -14,14 +14,19 @@ struct CustomizeSheet: View {
     /// Built-in looks only: keeps the copy as a saved look.
     var save: (() -> Void)? = nil
     let close: () -> Void
+    /// The tallest the sheet can be while the preview above it stays in view.
+    var maxHeight: CGFloat = 460
 
     @State private var squareChoice: SquareOption = .look
     @State private var confirmingDiscard = false
     @State private var showsMore = false
-    @State private var detent: PresentationDetent = Self.halfHeight
+    @State private var detent: PresentationDetent = .height(460)
+    @State private var contentHeight: CGFloat = 460
     @State private var taps = 0
 
-    private static let halfHeight = PresentationDetent.fraction(0.56)
+    /// Just tall enough for everything, unless that would cover the preview.
+    /// Then it stops there and the content scrolls.
+    private var compact: PresentationDetent { .height(min(contentHeight, maxHeight)) }
 
     private var isBuiltIn: Bool { save != nil }
     private var hasChanges: Bool { style != original }
@@ -38,7 +43,7 @@ struct CustomizeSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
                     header
                     squares
                     colors
@@ -48,8 +53,13 @@ struct CustomizeSheet: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 14)
-                .padding(.bottom, 28)
+                .padding(.top, 18)
+                .padding(.bottom, 20)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                    let wasCompact = detent != .large
+                    contentHeight = ceil(height)
+                    if wasCompact { detent = compact }
+                }
             }
             .scrollBounceBehavior(.basedOnSize)
             .toolbar(.hidden, for: .navigationBar)
@@ -57,14 +67,18 @@ struct CustomizeSheet: View {
                 MoreOptionsView(style: $style, original: original)
             }
         }
-        .presentationDetents([Self.halfHeight, .large], selection: $detent)
+        .presentationDetents([compact, .large], selection: $detent)
         .presentationDragIndicator(.visible)
+        // Swipes inside the sheet scroll its content instead of resizing it.
+        .presentationContentInteraction(.scrolls)
+        // No dimming over the preview, so the colors you pick read true.
+        .presentationBackgroundInteraction(.enabled(upThrough: compact))
         .presentationCornerRadius(28)
         .presentationBackground(Color.card)
         .interactiveDismissDisabled(isBuiltIn && hasChanges)
         .onChange(of: showsMore) { _, showing in
             // Room for the longer list, then back to half so the preview shows.
-            withAnimation(.snappy) { detent = showing ? .large : Self.halfHeight }
+            withAnimation(.snappy) { detent = showing ? .large : compact }
         }
         .confirmationDialog("Keep your changes?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
             if let save, canSave {
@@ -123,7 +137,7 @@ struct CustomizeSheet: View {
                                 .foregroundStyle(Color.primary)
                         }
                         .frame(maxWidth: .infinity)
-                        .frame(height: 72)
+                        .frame(height: 62)
                         .background(Color.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         .overlay {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)

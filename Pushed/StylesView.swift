@@ -26,10 +26,15 @@ struct StylesView: View {
         _selection = State(initialValue: selection)
     }
 
+    /// Room under the preview for the Customize sheet, from the screen's height.
+    @State private var sheetRoom: CGFloat = 460
+
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(spacing: 0) {
                 preview
+                    .id("preview")
                 sizeSwitch
                     .padding(.bottom, 18)
                 looksHeader
@@ -42,6 +47,15 @@ struct StylesView: View {
                     .padding(.top, 16)
             }
             .padding(.bottom, 24)
+        }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            // The scroll view runs from under the navigation bar to the bottom
+            // edge; keep the preview (300pt) and a little air above the sheet.
+            proxy.size.height + proxy.safeAreaInsets.bottom - Self.previewHeight - 12
+        } action: { sheetRoom = max($0, 320) }
+        .onChange(of: customizing != nil) { _, open in
+            if open { withAnimation(.snappy) { proxy.scrollTo("preview", anchor: .top) } }
+        }
         }
         .background(Color.page)
         .navigationTitle("Styles")
@@ -93,10 +107,12 @@ struct StylesView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 300)
+        .frame(height: Self.previewHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Preview of \(selectedName), \(familyName)")
     }
+
+    private static let previewHeight: CGFloat = 300
 
     private struct PreviewKey: Hashable {
         let selection: LookID
@@ -362,7 +378,8 @@ struct StylesView: View {
                 style: Binding(get: { draft ?? target.original }, set: { draft = $0 }),
                 canSave: store.library.canAdd,
                 save: { saveDraft(from: style) },
-                close: { customizing = nil }
+                close: { customizing = nil },
+                maxHeight: sheetRoom
             )
         case .saved(let id):
             CustomizeSheet(
@@ -376,7 +393,8 @@ struct StylesView: View {
                     get: { store.library[id]?.name ?? "" },
                     set: { name in store.update { $0[id]?.name = name } }
                 ),
-                close: { customizing = nil }
+                close: { customizing = nil },
+                maxHeight: sheetRoom
             )
         }
     }
