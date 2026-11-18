@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>App icon options</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1240px; height: 1200px; box-sizing: border-box; padding: 64px; background: #0B0B0C; color: #F5F5F7; font-family: Inter, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px">
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <h1 style="margin: 0; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">App icon options</h1>
+    <p style="margin: 0; font-size: 17px; color: #A1A1A6; line-height: 1.5; max-width: 900px">Each option in the three looks iOS asks for (light, dark and tinted), plus the dark one at real home screen size on the right. The current icon is the first row.</p>
+  </div>
+  <sc-for list="{{options}}" as="op" hint-placeholder-count="4">
+    <div style="display: flex; gap: 32px; align-items: center">
+      <div style="width: 230px; display: flex; flex-direction: column; gap: 6px; flex: none">
+        <span style="font-size: 20px; font-weight: 700">{{op.name}}</span>
+        <span style="font-size: 14px; color: #A1A1A6; line-height: 1.45">{{op.note}}</span>
+      </div>
+      <sc-for list="{{op.icons}}" as="ic" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+          <div style="width: {{ic.size}}px; height: {{ic.size}}px; border-radius: {{ic.corner}}px; background: {{ic.bg}}; position: relative; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.08)">
+            <div style="position: absolute; left: {{ic.pad}}px; top: {{ic.pad}}px; display: grid; grid-template-columns: repeat({{ic.n}}, {{ic.cell}}px); grid-auto-rows: {{ic.cell}}px; gap: {{ic.gap}}px">
+              <sc-for list="{{ic.cells}}" as="c" hint-placeholder-count="16">
+                <div style="width: {{c.s}}px; height: {{c.s}}px; border-radius: {{c.r}}px; background: {{c.bg}}; box-shadow: {{c.glow}}; outline: {{c.ring}}; outline-offset: {{c.off}}px; opacity: {{c.op}}; display: flex; align-items: center; justify-content: center">
+                  <sc-if value="{{c.dot}}" hint-placeholder-val="{{ false }}">
+                    <span style="width: {{c.ds}}px; height: {{c.ds}}px; border-radius: 50%; background: {{c.dc}}; box-shadow: {{c.dglow}}"></span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <span style="font-size: 12px; color: #8E8E93">{{ic.label}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const DARK = ['#161B22', '#0E4429', '#006D32', '#26A641', '#39D353'];
+    const LIGHT = ['#EBEDF0', '#9BE9A8', '#40C463', '#30A14E', '#216E39'];
+    const GRAY = ['rgba(255,255,255,0.14)', 'rgba(255,255,255,0.34)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0.78)', '#FFFFFF'];
+
+    // One icon: an n x n grid of levels, drawn at `size` px.
+    const icon = (o) => {
+      const size = o.size, n = o.n;
+      const pad = Math.round(size * o.padF);
+      const gap = Math.max(1, Math.round(size * o.gapF));
+      const cell = (size - 2 * pad - (n - 1) * gap) / n;
+      const cells = o.levels.map((v, i) => {
+        const today = i === o.levels.length - 1 && o.ring;
+        const base = {
+          s: cell, r: cell * o.round, bg: v < 0 ? 'transparent' : o.pal[v],
+          glow: (today && o.glow) ? ('0 0 ' + Math.round(cell * 0.9) + 'px ' + o.glow) : 'none',
+          ring: today ? (Math.max(1, Math.round(size * 0.012)) + 'px solid ' + o.ringColor) : 'none',
+          off: today ? Math.max(1, Math.round(size * 0.012)) : 0,
+          op: 1, dot: false, ds: 0, dc: 'transparent', dglow: 'none'
+        };
+        if (o.dots) {
+          base.bg = 'transparent';
+          base.dot = v >= 0;
+          base.ds = Math.round(cell * (v === 4 ? 0.62 : 0.52));
+          base.dc = today ? o.todayDot : o.pal[Math.max(v, 0)];
+          base.dglow = (today && o.glow) ? ('0 0 ' + Math.round(cell * 0.7) + 'px ' + o.glow) : 'none';
+        }
+        return base;
+      });
+      return { size, n, pad, gap, cell, cells, bg: o.bg, corner: Math.round(size * 0.2237), label: o.label };
+    };
+
+    const variants = (spec) => [
+      icon(Object.assign({}, spec, spec.light, { size: 168, label: 'Light' })),
+      icon(Object.assign({}, spec, spec.dark, { size: 168, label: 'Dark' })),
+      icon(Object.assign({}, spec, spec.tinted, { size: 168, label: 'Tinted' })),
+      icon(Object.assign({}, spec, spec.dark, { size: 60, label: 'Actual size' }))
+    ];
+
+    const current = {
+      n: 5, padF: 0.09, gapF: 0.05, round: 0.22, ring: false,
+      levels: [0,1,0,2,1, 1,0,2,1,2, 0,2,1,3,3, 2,1,3,4,3, 1,2,3,3,4],
+      light: { pal: LIGHT, bg: '#FFFFFF' },
+      dark: { pal: DARK, bg: '#0D1117', glow: 'rgba(57,211,83,0.7)' },
+      tinted: { pal: GRAY, bg: '#2A2A2E' }
+    };
+    const today = {
+      n: 4, padF: 0.14, gapF: 0.045, round: 0.2, ring: true,
+      levels: [1,0,2,1, 0,2,1,3, 2,1,3,3, 1,3,3,4],
+      light: { pal: LIGHT, bg: '#FFFFFF', ringColor: '#1F2328' },
+      dark: { pal: DARK, bg: 'radial-gradient(120% 120% at 100% 100%, rgba(57,211,83,0.22), transparent 55%), #0D1117', ringColor: '#E6EDF3', glow: 'rgba(57,211,83,0.65)' },
+      tinted: { pal: GRAY, bg: '#2A2A2E', ringColor: '#FFFFFF' }
+    };
+    const climb = {
+      n: 5, padF: 0.12, gapF: 0.04, round: 0.2, ring: true,
+      levels: [0,0,0,0,4, 0,0,0,3,4, 0,0,2,3,3, 0,1,2,3,3, 1,1,2,2,3],
+      light: { pal: LIGHT, bg: '#FFFFFF', ringColor: '#1F2328' },
+      dark: { pal: DARK, bg: 'linear-gradient(160deg, #111826, #0D1117 60%)', ringColor: '#E6EDF3', glow: 'rgba(57,211,83,0.65)' },
+      tinted: { pal: GRAY, bg: '#2A2A2E', ringColor: '#FFFFFF' }
+    };
+    // Climb reads bottom-left to top-right, so the ringed square is the top
+    // right one. Reorder so the last cell drawn is that square.
+    const climbIcon = (spec) => {
+      const out = variants(spec);
+      return out.map((ic) => {
+        const cells = ic.cells.slice();
+        const ringed = cells[cells.length - 1];
+        const topRight = cells[4];
+        cells[4] = ringed; cells[cells.length - 1] = topRight;
+        return Object.assign({}, ic, { cells });
+      });
+    };
+    const marks = {
+      n: 4, padF: 0.15, gapF: 0.04, round: 0.5, ring: true, dots: true,
+      levels: [1,0,2,1, 0,2,1,3, 2,1,3,3, 1,3,3,4],
+      light: { pal: ['#D1D1D6','#AEAEB2','#8E8E93','#3A3A3C','#111113'], bg: '#F5F5F7', ringColor: '#111113', todayDot: '#30A14E' },
+      dark: { pal: ['rgba(255,255,255,0.18)','rgba(255,255,255,0.42)','rgba(255,255,255,0.64)','rgba(255,255,255,0.86)','#FFFFFF'], bg: '#111113', ringColor: '#F2F2F2', todayDot: '#3FD26A', glow: 'rgba(63,210,106,0.6)' },
+      tinted: { pal: GRAY, bg: '#2A2A2E', ringColor: '#FFFFFF', todayDot: '#FFFFFF' }
+    };
+
+    return {
+      options: [
+        { name: 'Current', note: 'The 1.2 icon: a 5 by 5 grid with today glowing. Reads as a generic GitHub graph.', icons: variants(current) },
+        { name: 'Today', note: 'Same idea, refreshed for 1.3: bigger squares, tighter gaps, and the ring around today that the widgets now use.', icons: variants(today) },
+        { name: 'Climb', note: 'The squares build up to a ringed square at the top right, like a streak climbing. The most distinctive at a glance.', icons: climbIcon(climb) },
+        { name: 'Marks', note: 'The new Marks look as an icon: quiet dots with today ringed in green. The most minimal.', icons: variants(marks) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
