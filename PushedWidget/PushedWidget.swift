@@ -35,6 +35,10 @@ struct PushedWidget: Widget {
         // PushedWidgetView applies the standard margins itself, so its
         // squares can be sized to meet them exactly.
         .contentMarginsDisabled()
+        // The backdrop is part of each look, not decoration. Without this,
+        // iOS treats it as removable and lays its own glass over it on the
+        // Home Screen, which washes the dark looks out next to the app's preview.
+        .containerBackgroundRemovable(false)
     }
 }
 
