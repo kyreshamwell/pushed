@@ -1,741 +1,434 @@
 import SwiftUI
-import UIKit
 import WidgetKit
+
+/// The screens reached from Home.
+enum Route: Hashable {
+    case styles
+    case settings
+}
 
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var username: String = ContentView.initialUsername
-    @State private var token: String = ContentView.initialToken
-    @State private var snapshot: ContributionSnapshot? = ContributionSnapshot.load()
-    @State private var widgetWeeks: Int = AppConfig.widgetWeeks
-    @State private var streakIcon: String = AppConfig.streakIcon
-    @State private var library = AppConfig.styleLibrary
-    @State private var protection = AppConfig.streakProtection
-    @State private var testScenario = TestScenario.current
-    @State private var dayOffMark = AppConfig.dayOffMark
-    @State private var status: Status = .idle
-    @State private var notifications: NotificationSettings = AppConfig.notificationSettings
-    @State private var permissionDenied = false
-    @State private var tokenExpiry: Date? = AppConfig.tokenExpiry
-
-    enum Status: Equatable {
-        case idle
-        case loading
-        case success
-        case failed(String)
-    }
-
-    private var isConnected: Bool {
-        !username.isEmpty && !token.isEmpty && snapshot != nil
-    }
-
-    private static var initialUsername: String {
-        let stored = AppConfig.sharedDefaults.string(forKey: AppConfig.usernameDefaultsKey) ?? ""
-        #if DEBUG
-        if DemoMode.isRequested && stored.isEmpty { return DemoMode.username }
-        #endif
-        return stored
-    }
-
-    private static var initialToken: String {
-        #if DEBUG
-        // Held in memory only, so demo mode never touches the Keychain.
-        if DemoMode.isRequested { return "demo" }
-        #endif
-        return KeychainHelper.read(account: AppConfig.keychainAccount) ?? ""
-    }
+    @State private var model = AppModel()
+    @State private var store = StyleLibraryStore()
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
-            if isConnected {
-                Form {
-                    if testScenario != .off {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Label("Showing test data: \(testScenario.name)", systemImage: "testtube.2")
-                            if let ends = TestScenario.endsAt() {
-                                Text("Switches off on its own \(ends.formatted(.dateTime.weekday(.wide).hour().minute())).")
-                                    .font(.caption)
-                            }
-                        }
-                        .foregroundStyle(.orange)
-                    }
-                    if let snapshot = shownSnapshot {
-                        // One reading for the whole screen, the same one the
-                        // widget and the reminders work from.
-                        let history = snapshot.history(protection: protection)
-                        graphSection(history)
-                        statsSection(history, snapshot: snapshot)
-                        DaysOffSection(history: history, protection: protection, apply: apply)
-                        widgetSection(streak: history.streak)
-                    }
-                    notificationSection
-                    accountSection
-                    if BuildEnvironment.showsDebugTools {
-                        testingSection
-                        Section {
-                            NavigationLink("Notification debug") { DebugNotificationsView() }
-                        }
-                    }
+        NavigationStack(path: $path) {
+            Group {
+                if model.isConnected {
+                    HomeView()
+                } else {
+                    OnboardingView()
                 }
-                .navigationTitle("Pushed")
-                .refreshable { await refresh() }
-                .environment(\.dayOffMark, dayOffMark)
-                // Picks up styles and marks changed on the way back.
-                .onAppear {
-                    library = AppConfig.styleLibrary
-                    dayOffMark = AppConfig.dayOffMark
+            }
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case .styles:
+                    StylesView(data: model.previewData(), selection: todaysLook)
+                case .settings:
+                    SettingsView()
                 }
-                .task { await refreshPermissionState() }
-            } else {
-                setupView
-                    .navigationTitle("Pushed")
             }
         }
-        // Turning notifications back on happens in iOS Settings, i.e. outside
-        // this app — so the only moment we can notice is the return trip. `.task`
-        // alone doesn't re-run on foreground, which left the red "notifications
-        // are off" warning up until the next cold launch.
+        .environment(model)
+        .environment(store)
+        .environment(\.dayOffMark, model.dayOffMark)
+        .tint(.pushedGreen)
         .onChange(of: scenePhase) { _, phase in
-            guard phase == .active else { return }
-            Task { await refreshPermissionState() }
-            // A test may have switched itself off while the app was away.
-            TestScenario.expireIfNeeded()
-            if testScenario != TestScenario.current {
-                testScenario = TestScenario.current
-                protection = AppConfig.streakProtection
+            switch phase {
+            case .active:
+                store.refresh()
+                Task { await model.becameActive() }
+            case .background, .inactive:
+                store.flush()
+            @unknown default:
+                break
+            }
+        }
+        .task { await model.refreshPermissionState() }
+        .onChange(of: model.isConnected) { _, connected in
+            if !connected { path = NavigationPath() }
+        }
+    }
+
+    /// Styles opens on what the widget wears today.
+    private var todaysLook: LookID {
+        store.library.rotationSchedule(from: Date()).first ?? .builtIn(.classic)
+    }
+}
+
+/// The live widget, today, the numbers and the way into Styles.
+struct HomeView: View {
+    @Environment(AppModel.self) private var model
+    @Environment(StyleLibraryStore.self) private var store
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var insight: Insight?
+
+    var body: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 20) {
+                    header
+                    if model.testScenario != .off {
+                        testBanner
+                    }
+                    if let snapshot = model.shownSnapshot, let history = model.history {
+                        widget
+                        if history.canSaveStreak {
+                            rescueCard(history)
+                        } else if let kind = history.claim(daysAgo: 1) {
+                            claimedYesterday(kind)
+                        }
+                        TodayCard(history: history, snapshot: snapshot)
+                        statTiles(history, snapshot: snapshot)
+                        stylesRow
+                        Spacer(minLength: 0)
+                        syncLine(snapshot)
+                    }
+                }
+                .padding(.bottom, 24)
+                .frame(minHeight: geometry.size.height, alignment: .top)
+            }
+            .refreshable { await model.refresh() }
+        }
+        .background(Color.page)
+        .background(BackButtonTitle(title: "Home"))
+        .navigationTitle("Home")
+        .toolbar(.hidden, for: .navigationBar)
+        .animation(.snappy, value: model.history?.today)
+        .sheet(item: $insight) { insight in
+            insightSheet(insight)
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: insight) { _, opened in opened != nil }
+    }
+
+    @ViewBuilder
+    private func insightSheet(_ insight: Insight) -> some View {
+        if let history = model.history {
+            switch insight {
+            case .current:
+                CurrentStreakSheet(history: history, counts: model.shownSnapshot?.recentCounts)
+            case .best:
+                BestStreakSheet(history: history)
+            case .year:
+                YearSheet(model: YearHistoryModel(
+                    username: model.username,
+                    token: model.token,
+                    // The real data, even during a test: tests change the
+                    // streak, not what was pushed over the year.
+                    snapshot: model.snapshot,
+                    isDemo: isDemo
+                ))
             }
         }
     }
 
-    private func refreshPermissionState() async {
-        let denied = await SystemNotificationCenter.authorizationStatus() == .denied
-        await MainActor.run { permissionDenied = denied }
+    private var isDemo: Bool {
+        #if DEBUG
+        DemoMode.isRequested
+        #else
+        false
+        #endif
     }
 
-    // MARK: - Setup (first launch / signed out)
+    private var header: some View {
+        HStack {
+            Text("Pushed")
+                .font(.largeTitle.weight(.heavy))
+            Spacer()
+            NavigationLink(value: Route.settings) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(Color.primary)
+                    .frame(width: 44, height: 44)
+                    .background(Color.card, in: Circle())
+            }
+            .buttonStyle(PressableStyle(scale: 0.9))
+            .accessibilityLabel("Settings")
+        }
+        .padding(.leading, 20)
+        .padding(.trailing, 12)
+        .padding(.top, 18)
+    }
 
-    private var setupView: some View {
-        Form {
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Connect your GitHub")
-                        .font(.title3.bold())
-                    Text("Pushed shows your contribution graph on your home screen. It needs two things: your GitHub username and an access token so it can read your contribution data. Setup takes about a minute.")
+    private var testBanner: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label("Test data: \(model.testScenario.name)", systemImage: "testtube.2")
+                .font(.subheadline.weight(.semibold))
+            if let ends = TestScenario.endsAt() {
+                Text("Ends \(ends.formatted(.dateTime.weekday(.wide).hour().minute()))")
+                    .font(.caption)
+            }
+        }
+        .foregroundStyle(.orange)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .card(radius: 14)
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Widget
+
+    private var widget: some View {
+        VStack(spacing: 12) {
+            NavigationLink(value: Route.styles) {
+                ScaledWidget(
+                    look: store.library.rotationSchedule(from: Date()).first.flatMap(store.library.look(of:))
+                        ?? WidgetLook(.classic),
+                    family: .systemMedium,
+                    scale: 1,
+                    data: model.previewData()
+                )
+                .shadow(color: .black.opacity(colorScheme == .dark ? 0.6 : 0.16), radius: 28, y: 16)
+            }
+            .buttonStyle(PressableStyle(scale: 0.98))
+            .accessibilityLabel("Your widget. Opens Styles.")
+            Text(HomeWords.rotationCaption(store.library, on: Date()))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .contentTransition(.opacity)
+        }
+    }
+
+    // MARK: - Yesterday
+
+    private func rescueCard(_ history: StreakHistory) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 14) {
+                StatusIcon(symbol: "exclamationmark", tint: .orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Save your \(history.streakBeforeBreak)-day streak")
+                        .font(.headline)
+                    Text("Yesterday is empty. Cover it before midnight.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 4)
             }
-
-            Section("Step 1 · Your username") {
-                Link(destination: URL(string: "https://github.com/settings/profile")!) {
-                    Label("Open your GitHub profile settings", systemImage: "arrow.up.right.square")
+            HStack(spacing: 8) {
+                // A claim that takes today's day off away says so, since
+                // today goes back to needing a push.
+                if history.canClaim(.rest, daysAgo: 1) {
+                    Button(
+                        history.claimMovesTodaysDayOff(.rest, daysAgo: 1) ? "Move today's rest day" : "Use a rest day",
+                        systemImage: "moon.zzz"
+                    ) { model.claim(.rest, daysAgo: 1) }
                 }
-                bullets([
-                    "Your username is at the top of that page, under Public profile",
-                    "It's also the name in your profile link: github.com/username",
-                    "In the GitHub app: tap your profile picture — it's the grey @name under your display name",
-                ])
-            }
-
-            Section {
-                Link(destination: URL(string: "https://github.com/settings/tokens/new?scopes=read:user&description=Contribution%20Widget")!) {
-                    Label("Open GitHub token settings", systemImage: "arrow.up.right.square")
-                }
-                bullets([
-                    "Tap the link above — the permission it needs is already checked for you",
-                    "Scroll to the bottom and tap the green Generate token button",
-                    "Tap the copy icon next to the long code that appears",
-                    "That code is your token — GitHub shows it only once, so copy it before leaving the page",
-                ])
-            } header: {
-                Text("Step 2 · Your token")
-            } footer: {
-                Text("The token is read-only — it can see your contribution stats, never your code. It's stored in the iOS Keychain, the same place Safari keeps your passwords.")
-            }
-
-            Section("Step 3 · Connect") {
-                TextField("GitHub username", text: $username)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                SecureField("Paste your token", text: $token)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-
-                Button {
-                    Task { await refresh() }
-                } label: {
-                    if status == .loading {
-                        ProgressView()
-                    } else {
-                        Text("Connect")
-                    }
-                }
-                .disabled(username.isEmpty || token.isEmpty || status == .loading)
-
-                if case .failed(let message) = status {
-                    Text(message).foregroundStyle(.red).font(.caption)
+                if history.canClaim(.freeze, daysAgo: 1) {
+                    Button(
+                        history.claimMovesTodaysDayOff(.freeze, daysAgo: 1) ? "Move today's freeze" : "Use a freeze",
+                        systemImage: "snowflake"
+                    ) { model.claim(.freeze, daysAgo: 1) }
                 }
             }
-
-            Section("Step 4 · Add the widget") {
-                bullets([
-                    "Long-press anywhere on your home screen",
-                    "Tap the + button in the top corner",
-                    "Search for this app and pick a size",
-                    "To change its style, long-press the widget and tap Edit Widget",
-                    "Done — it refreshes itself every couple of hours, no need to open this app again",
-                ])
-                NavigationLink("See the widget styles") {
-                    WidgetStyleGallery(snapshot: nil)
-                }
-            }
-
-            if BuildEnvironment.showsDebugTools {
-                Section {
-                    NavigationLink("Notification debug") { DebugNotificationsView() }
-                }
-            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .padding(.leading, 54)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .card()
+        .padding(.horizontal, 16)
     }
 
-    /// Renders a list of strings as aligned bullet lines.
-    private func bullets(_ lines: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(lines, id: \.self) { line in
-                HStack(alignment: .top, spacing: 6) {
-                    Text("•")
-                    Text(line)
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
+    private func claimedYesterday(_ kind: DayOff) -> some View {
+        HStack(spacing: 14) {
+            StatusIcon(symbol: kind == .rest ? "moon.zzz.fill" : "snowflake", tint: kind == .rest ? .indigo : .cyan)
+            Text(kind == .rest ? "Yesterday was a rest day" : "Yesterday was frozen")
+                .font(.subheadline)
+            Spacer(minLength: 0)
+            Button("Undo") { model.undoClaim(daysAgo: 1) }
+                .font(.subheadline.weight(.semibold))
         }
-        .padding(.vertical, 2)
+        .padding(16)
+        .card()
+        .padding(.horizontal, 16)
     }
 
-    // MARK: - Graph
+    // MARK: - Numbers
 
-    private func graphSection(_ history: StreakHistory) -> some View {
-        Section {
-            VStack(alignment: .leading, spacing: 10) {
-                ContributionGridView(
-                    days: history.days(forWeeks: widgetWeeks),
-                    endDate: history.endDate,
-                    showsLabels: true
-                )
-                .frame(height: 104)
+    private func statTiles(_ history: StreakHistory, snapshot: ContributionSnapshot) -> some View {
+        // Three across leaves no room for the labels at the largest text
+        // sizes, so there they stack.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 10))
+        return layout {
+            statButton(.current, value: history.streak, label: "Current streak")
+            statButton(.best, value: history.bestStreak, label: "Best streak")
+            statButton(.year, value: snapshot.yearToDateTotal, label: "This year")
+        }
+        .padding(.horizontal, 16)
+    }
 
-                HStack {
-                    Text(rangeLabel)
-                        .font(.caption2)
+    private func statButton(_ kind: Insight, value: Int, label: String) -> some View {
+        Button {
+            insight = kind
+        } label: {
+            StatTile(value: value, label: label)
+                .foregroundStyle(Color.primary)
+        }
+        .buttonStyle(PressableStyle())
+        .accessibilityHint("Shows the details")
+    }
+
+    // MARK: - Styles
+
+    private var stylesRow: some View {
+        NavigationLink(value: Route.styles) {
+            HStack(spacing: 14) {
+                swatches
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Styles")
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                    Text(HomeWords.stylesSummary(store.library))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Spacer()
-                    LegendView()
+                        .contentTransition(.numericText())
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .card()
+        }
+        .buttonStyle(PressableStyle(scale: 0.98))
+        .padding(.horizontal, 16)
+    }
+
+    /// The looks in the rotation, or the built-ins when nothing rotates.
+    private var swatches: some View {
+        let rotating = store.library.rotationLooks
+        let looks = Array((rotating.isEmpty ? WidgetStyle.builtIn.map(WidgetLook.init) : rotating).prefix(5))
+        return HStack(spacing: -10) {
+            ForEach(looks.indices, id: \.self) { index in
+                LookSwatch(look: looks[index])
+                    .padding(2)
+                    .background(Color.card, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            }
+        }
+    }
+
+    private func syncLine(_ snapshot: ContributionSnapshot) -> some View {
+        TimelineView(.periodic(from: .now, by: 30)) { context in
+            VStack(spacing: 4) {
+                Text("Synced \(HomeWords.synced(snapshot.fetchedAt, now: context.date)) · pull to refresh")
+                if case .failed(let message) = model.status {
+                    Text(message)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
                 }
             }
-            .padding(.vertical, 4)
-
-            DisclosureGroup("How to read this") {
-                Text("""
-                Each square is one day. Columns are weeks (oldest on the left), rows run Sunday to Saturday top to bottom — the same layout as your github.com profile.
-
-                Color shows how active that day was relative to your own history: grey means no contributions, and the four greens are GitHub's intensity buckets (more contributions = darker). A "contribution" is a commit pushed to a default branch, an opened PR or issue, or a code review.
-
-                A marked square is a day off: a rest day, or a freeze in ice blue. The streak steps over it without counting it. Choose how they're marked under Rest Days.
-                """)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            .font(.subheadline)
-        } header: {
-            Text("Your Contributions")
-        }
-    }
-
-    private func statsSection(_ history: StreakHistory, snapshot: ContributionSnapshot) -> some View {
-        Section("Stats") {
-            LabeledContent("Current streak", value: "\(history.streak) day\(history.streak == 1 ? "" : "s")")
-            LabeledContent("Today", value: todayText(history.today))
-            LabeledContent("Contributions this year", value: "\(snapshot.totalContributions)")
-
-            // Follows the time-range picker, so this always describes the exact
-            // squares drawn above it. The old version hardcoded "26 wks" while
-            // counting the full retained year, and ignored the picker entirely.
-            let window = history.days(forWeeks: widgetWeeks)
-            LabeledContent(
-                "Green squares",
-                value: "\(window.filter(\.isActive).count) of \(window.count) days"
-            )
-            Text("Last synced \(snapshot.fetchedAt.formatted(date: .abbreviated, time: .shortened)). Pull down to refresh.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private func todayText(_ today: StreakHistory.Today) -> String {
-        switch today {
-        case .pushed: "Committed ✓"
-        case .off(.rest): "Rest day"
-        case .off(.freeze): "Streak frozen"
-        case .pending: "Not committed yet"
-        }
-    }
-
-    /// Single write path for rest days and freezes. A claim changes what
-    /// today's reminders should say under identifiers that are already
-    /// queued, so the day slots are dropped and planned again.
-    private func apply(_ updated: StreakProtection) {
-        let updated = testScenario == .off ? updated : TestScenario.normalized(updated)
-        protection = updated
-        AppConfig.streakProtection = updated
-        WidgetCenter.shared.reloadAllTimelines()
-        Task {
-            await NotificationScheduler(center: SystemNotificationCenter()).resetDaySlots()
-            await NotificationCoordinator.reconcile()
-        }
-    }
-
-    // MARK: - Testing
-
-    /// The real snapshot, or the pretend one while a test is running.
-    private var shownSnapshot: ContributionSnapshot? {
-        testScenario.snapshot(replacing: snapshot)
-    }
-
-    /// TestFlight and Xcode builds only. Swaps in a sample streak everywhere
-    /// at once, so rest days, freezes and the reminders can be tried for real.
-    private var testingSection: some View {
-        Section {
-            Picker("Pretend", selection: Binding(
-                get: { testScenario },
-                set: { setTestScenario($0) }
-            )) {
-                ForEach(TestScenario.allCases) { scenario in
-                    Text(scenario.name).tag(scenario)
-                }
-            }
-            if testScenario != .off {
-                Button("Start Test Over") {
-                    TestScenario.startOver()
-                    refreshAfterTestChange()
-                }
-            }
-        } header: {
-            Text("Testing")
-        } footer: {
-            Text("""
-            Shows a pretend streak in the app, the widgets and the reminders, with your rest weekdays as days off.
-
-            To try the freeze: pick Missed yesterday, then under Days off use the freeze for yesterday. The streak comes back and yesterday's square gets the day-off mark. Start Test Over gives the freeze back so you can try again. Waiting on today does the same for taking today off. If yesterday was one of your rest days it's already covered, so untick that day to see a real miss.
-
-            While testing, rest day changes apply straight away and reach back over past weeks. Everything goes back to how it was when you switch this off, or on its own after 2 days. Only in TestFlight and Xcode builds, never in the App Store version.
-            """)
-        }
-    }
-
-    private func setTestScenario(_ scenario: TestScenario) {
-        TestScenario.switchTo(scenario)
-        testScenario = scenario
-        refreshAfterTestChange()
-    }
-
-    private func refreshAfterTestChange() {
-        protection = AppConfig.streakProtection
-        WidgetCenter.shared.reloadAllTimelines()
-        Task {
-            await NotificationScheduler(center: SystemNotificationCenter()).resetDaySlots()
-            await NotificationCoordinator.reconcile()
-        }
-    }
-
-    // MARK: - Widget settings
-
-    private var rangeLabel: String {
-        switch widgetWeeks {
-        case 4: return "Last month"
-        case 13: return "Last 3 months"
-        case 26: return "Last 6 months"
-        default: return "Last year"
-        }
-    }
-
-    private func widgetSection(streak: Int) -> some View {
-        Section {
-            Picker("Time range", selection: $widgetWeeks) {
-                Text("1 month").tag(4)
-                Text("3 months").tag(13)
-                Text("6 months").tag(26)
-                Text("1 year").tag(52)
-            }
-            .onChange(of: widgetWeeks) { _, newValue in
-                AppConfig.sharedDefaults.set(newValue, forKey: AppConfig.widgetWeeksKey)
-                WidgetCenter.shared.reloadAllTimelines()
-            }
-
-            NavigationLink {
-                StreakIconPicker(icon: streakIconBinding, streak: streak)
-            } label: {
-                LabeledContent("Streak icon", value: streakIcon == StreakIcon.none ? "None" : streakIcon)
-            }
-
-            NavigationLink {
-                WidgetStyleGallery(snapshot: snapshot, weeks: widgetWeeks, icon: streakIcon)
-            } label: {
-                LabeledContent("Styles") {
-                    HStack(spacing: 8) {
-                        Text("\(WidgetStyle.builtIn.count) built in, \(library.styles.count) of yours")
-                        if let first = library.styles.first {
-                            CustomStyleSwatch(style: first.style)
-                        }
-                    }
-                }
-            }
-
-            NavigationLink {
-                RotationView(snapshot: snapshot, weeks: widgetWeeks, icon: streakIcon)
-            } label: {
-                LabeledContent("Daily rotation", value: "Today: \(library.rotationPick(on: Date()).name)")
-            }
-        } header: {
-            Text("Widget")
-        } footer: {
-            Text("Time range applies to this graph and to any widget whose Range is Same as app. Fewer weeks means bigger squares. To give a widget its own range, layout, style or number, long-press it on your home screen and tap Edit Widget.")
-        }
-    }
-
-    /// Saves as it's set, so the widget picks up each emoji while the picker
-    /// is still open.
-    private var streakIconBinding: Binding<String> {
-        Binding(
-            get: { streakIcon },
-            set: { newValue in
-                streakIcon = newValue
-                AppConfig.streakIcon = newValue
-                WidgetCenter.shared.reloadAllTimelines()
-            }
-        )
-    }
-
-    // MARK: - Notifications
-
-    private func time(hour: Int, minute: Int) -> Date {
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
-        components.hour = hour
-        components.minute = minute
-        return Calendar.current.date(from: components) ?? Date()
-    }
-
-    /// Builds the updated settings value and hands it straight to `apply`.
-    /// Deliberately never reads `notifications` back after writing it —
-    /// SwiftUI can return the pre-write value from @State inside the same
-    /// closure, which silently persisted and scheduled the *old* time.
-    private func timeBinding(
-        hour: WritableKeyPath<NotificationSettings, Int>,
-        minute: WritableKeyPath<NotificationSettings, Int>
-    ) -> Binding<Date> {
-        Binding(
-            get: { time(hour: notifications[keyPath: hour], minute: notifications[keyPath: minute]) },
-            set: { newValue in
-                let components = Calendar.current.dateComponents([.hour, .minute], from: newValue)
-                var updated = notifications
-                updated[keyPath: hour] = components.hour ?? 0
-                updated[keyPath: minute] = components.minute ?? 0
-                apply(updated)
-            }
-        )
-    }
-
-    private var notificationSection: some View {
-        Section {
-            Toggle("Daily reminders", isOn: Binding(
-                get: { notifications.enabled },
-                set: { wantsOn in
-                    if wantsOn {
-                        Task { await enableNotifications() }
-                    } else {
-                        var updated = notifications
-                        updated.enabled = false
-                        apply(updated)
-                    }
-                }
-            ))
-
-            if notifications.enabled {
-                DatePicker(
-                    "Midday check-in",
-                    selection: timeBinding(hour: \.middayHour, minute: \.middayMinute),
-                    displayedComponents: .hourAndMinute
-                )
-
-                DatePicker(
-                    "Evening deadline",
-                    selection: timeBinding(hour: \.eveningHour, minute: \.eveningMinute),
-                    displayedComponents: .hourAndMinute
-                )
-
-                Toggle("Streak milestones", isOn: Binding(
-                    get: { notifications.milestonesEnabled },
-                    set: { var updated = notifications; updated.milestonesEnabled = $0; apply(updated) }
-                ))
-
-                Toggle("Token expiry warnings", isOn: Binding(
-                    get: { notifications.tokenAlertsEnabled },
-                    set: { var updated = notifications; updated.tokenAlertsEnabled = $0; apply(updated) }
-                ))
-            }
-
-            if permissionDenied {
-                Text("Notifications are turned off for Pushed in iOS Settings.")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                Button("Open iOS Settings") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
-                }
-            }
-
-            if notifications.enabled && !permissionDenied {
-                Text(nextReminderDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        } header: {
-            Text("Reminders")
-        } footer: {
-            Text("Nothing fires on days you've already pushed. The midday check-in is a heads-up; the evening one only appears when a streak is genuinely on the line. Quiet days taper off on their own the longer you're away.")
-        }
-    }
-
-    /// Shows exactly what will fire and when, using the same planner the
-    /// scheduler runs. Without this, "nothing happened" is ambiguous between
-    /// working-as-designed (you already pushed), a time that's already passed,
-    /// and an actual bug — which is a miserable thing to debug from the outside.
-    private var nextReminderDescription: String {
-        let plan = NotificationPlanner.plan(
-            NotificationContext(
-                snapshot: shownSnapshot,
-                protection: protection,
-                settings: notifications,
-                tokenExpiry: AppConfig.tokenExpiry,
-                lastCelebratedStreak: AppConfig.lastCelebratedStreak,
-                authFailed: AppConfig.authFailed,
-                lastAuthAlertAt: AppConfig.lastAuthAlertAt,
-                now: Date()
-            )
-        ).filter { $0.id.hasPrefix("daily-") }
-
-        guard let next = plan.min(by: { $0.fireDate < $1.fireDate }) else {
-            switch shownSnapshot?.history(protection: protection).today {
-            case .pushed:
-                return "You've already pushed today, so nothing is scheduled. Reminders resume tomorrow."
-            case .off:
-                return "Today is a day off, so nothing is scheduled. Reminders resume tomorrow."
-            default:
-                break
-            }
-            if AppConfig.authFailed {
-                return "Paused until you reconnect your GitHub token."
-            }
-            return "Nothing left today. Both times have already passed."
-        }
-        return "Next at \(next.fireDate.formatted(date: .omitted, time: .shortened)): “\(next.title)”"
-    }
-
-    private func enableNotifications() async {
-        let granted = await SystemNotificationCenter.requestAuthorization()
-        await MainActor.run {
-            permissionDenied = !granted
-            var updated = notifications
-            updated.enabled = granted
-            apply(updated)
-        }
-    }
-
-    /// Single write path for settings. Takes the new value explicitly rather
-    /// than reading it back off @State, and drops the day slots before
-    /// reconciling — they reuse the same identifiers, so the additive diff
-    /// alone would leave the previous fire time in place.
-    private func apply(_ settings: NotificationSettings) {
-        notifications = settings
-        AppConfig.notificationSettings = settings
-        Task {
-            await NotificationScheduler(center: SystemNotificationCenter()).resetDaySlots()
-            await NotificationCoordinator.reconcile()
-        }
-    }
-
-    // MARK: - Account (connected state)
-
-    private var accountSection: some View {
-        Section {
-            LabeledContent("Signed in as", value: username)
-
-            if let tokenExpiry {
-                let days = Calendar.current.dateComponents(
-                    [.day], from: Calendar.current.startOfDay(for: Date()),
-                    to: Calendar.current.startOfDay(for: tokenExpiry)
-                ).day ?? 0
-                LabeledContent("Token expires") {
-                    Text(days <= 0 ? "Expired" : "in \(days) day\(days == 1 ? "" : "s")")
-                        .foregroundStyle(days <= 5 ? .red : days <= 10 ? .orange : .secondary)
-                }
-            }
-
-            Button("Refresh now") {
-                Task { await refresh() }
-            }
-            .disabled(status == .loading)
-
-            Button("Disconnect", role: .destructive) {
-                disconnect()
-            }
-
-            switch status {
-            case .loading:
-                ProgressView()
-            case .failed(let message):
-                Text(message).foregroundStyle(.red).font(.caption)
-            case .success:
-                Text("Connected ✓").foregroundStyle(.green).font(.caption)
-            case .idle:
-                EmptyView()
-            }
-        } header: {
-            Text("GitHub Account")
-        } footer: {
-            Text("The widget refreshes itself every couple of hours in the background — no need to open this app. \"Refresh now\" is for when you just pushed and want the widget updated immediately.")
-        }
-    }
-
-    private func disconnect() {
-        KeychainHelper.delete(account: AppConfig.keychainAccount)
-        AppConfig.sharedDefaults.removeObject(forKey: AppConfig.usernameDefaultsKey)
-        AppConfig.sharedDefaults.removeObject(forKey: ContributionSnapshot.defaultsKey)
-        AppConfig.resetNotificationState()
-        AppConfig.forgetAccountHistory()
-        protection = AppConfig.streakProtection
-        username = ""
-        token = ""
-        snapshot = nil
-        tokenExpiry = nil
-        status = .idle
-        Task { await NotificationScheduler(center: SystemNotificationCenter()).removeAllManaged() }
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    private func refresh() async {
-        #if DEBUG
-        if DemoMode.isRequested { return }
-        #endif
-        guard !username.isEmpty, !token.isEmpty else { return }
-
-        // Reminder times and the streak icon are device preferences and stay
-        // put. Milestone progress, token expiry and auth state belong to the
-        // account — carrying them across a switch would suppress the new
-        // account's milestones using the old one's history.
-        let previous = AppConfig.sharedDefaults.string(forKey: AppConfig.usernameDefaultsKey)
-        let switchedAccount = previous.map { $0.lowercased() != username.lowercased() } ?? false
-        if switchedAccount {
-            AppConfig.resetNotificationState()
-            AppConfig.forgetAccountHistory()
-            await MainActor.run { protection = AppConfig.streakProtection }
-            AppConfig.sharedDefaults.removeObject(forKey: ContributionSnapshot.defaultsKey)
-            await NotificationScheduler(center: SystemNotificationCenter()).removeAllManaged()
-        }
-
-        let isFirstConnect = snapshot == nil || switchedAccount
-        AppConfig.sharedDefaults.set(username, forKey: AppConfig.usernameDefaultsKey)
-
-        // Bail before the network call rather than after: without the token in
-        // the Keychain the widget and the background refresh have nothing to
-        // read, so a "successful" fetch here would only paint a working app
-        // around a widget that can never update.
-        guard KeychainHelper.save(token, account: AppConfig.keychainAccount) else {
-            let code = KeychainHelper.lastSaveStatus.map { " (Keychain error \($0))" } ?? ""
-            await MainActor.run {
-                status = .failed("Couldn't save your token to the iOS Keychain\(code). Try again, or reinstall the app if it keeps failing.")
-            }
-            return
-        }
-        await MainActor.run { status = .loading }
-
-        do {
-            let fetch = try await GitHubContributionsService.fetch(username: username, token: token)
-            let newSnapshot = ContributionSnapshot.from(fetch.calendar)
-            newSnapshot.save()
-
-            AppConfig.authFailed = false
-            if let expiry = fetch.tokenExpiry {
-                AppConfig.tokenExpiry = expiry
-                // A new token means new dates — drop the old ladder so it can
-                // be rebuilt rather than warning about a token that's gone.
-                await NotificationScheduler(center: SystemNotificationCenter()).removeTokenNotifications()
-            }
-
-            // Someone connecting mid-streak shouldn't be congratulated for a
-            // milestone they passed before installing the app.
-            if isFirstConnect {
-                AppConfig.lastCelebratedStreak = NotificationPlanner.milestoneBaseline(
-                    for: newSnapshot, protection: AppConfig.streakProtection, asOf: Date()
-                )
-                // Gaps from before today weren't misses Pushed could have
-                // warned about, so they're never marked as missed.
-                AppConfig.startTracking()
-                await MainActor.run { protection = AppConfig.streakProtection }
-            }
-
-            await NotificationCoordinator.reconcile(snapshot: newSnapshot)
-
-            await MainActor.run {
-                snapshot = newSnapshot
-                tokenExpiry = AppConfig.tokenExpiry
-                status = .success
-                WidgetCenter.shared.reloadAllTimelines()
-            }
-        } catch GitHubServiceError.unauthorized {
-            AppConfig.authFailed = true
-            await NotificationCoordinator.reconcile()
-            await MainActor.run {
-                status = .failed("GitHub rejected that token — it may have expired. Generate a new one and paste it here.")
-            }
-        } catch GitHubServiceError.userNotFound {
-            await MainActor.run {
-                status = .failed("GitHub has no user named “\(username)”. Check the spelling — it's the name in your profile link, github.com/username.")
-            }
-        } catch GitHubServiceError.rateLimited {
-            // Explicitly *not* an auth failure, so authFailed stays as it was
-            // and the reminder ladder keeps running on the cached snapshot.
-            await MainActor.run {
-                status = .failed("GitHub is rate-limiting requests right now. Wait a few minutes and try again.")
-            }
-        } catch GitHubServiceError.apiError(let message) {
-            await MainActor.run {
-                status = .failed("GitHub returned an error: \(message)")
-            }
-        } catch {
-            await MainActor.run {
-                status = .failed("Couldn't reach GitHub. Check your connection and try again.")
-            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 24)
         }
     }
 }
 
-/// The Less → More legend, same as the one under GitHub's graph.
-struct LegendView: View {
-    @Environment(\.colorScheme) private var colorScheme
+/// "Pushed today", "Not yet today", or the day off, with the actions that
+/// apply to today.
+struct TodayCard: View {
+    @Environment(AppModel.self) private var model
+    let history: StreakHistory
+    let snapshot: ContributionSnapshot
 
     var body: some View {
-        HStack(spacing: 3) {
-            Text("Less").font(.caption2).foregroundStyle(.secondary)
-            ForEach(0..<5) { level in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(WidgetStyle.classic.theme(for: colorScheme).color(for: level))
-                    .frame(width: 9, height: 9)
+        let words = HomeWords.today(history, count: HomeWords.todayCount(snapshot, history: history))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 14) {
+                StatusIcon(symbol: words.symbol, tint: tint(words.kind))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(words.title)
+                        .font(.headline)
+                    if let detail = words.detail {
+                        Text(detail)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+                if case .off = history.today, history.claim(daysAgo: 0) != nil {
+                    Button("Undo") { model.undoClaim(daysAgo: 0) }
+                        .font(.subheadline.weight(.semibold))
+                }
             }
-            Text("More").font(.caption2).foregroundStyle(.secondary)
+            if history.today == .pending, history.todayCanKeepStreak, canTakeToday {
+                HStack(spacing: 8) {
+                    if history.canClaim(.rest, daysAgo: 0) {
+                        Button("Rest day", systemImage: "moon.zzz") { model.claim(.rest, daysAgo: 0) }
+                    }
+                    if history.canClaim(.freeze, daysAgo: 0) {
+                        Button("Use a freeze", systemImage: "snowflake") { model.claim(.freeze, daysAgo: 0) }
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .padding(.leading, 54)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .card()
+        .padding(.horizontal, 16)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var canTakeToday: Bool {
+        history.canClaim(.rest, daysAgo: 0) || history.canClaim(.freeze, daysAgo: 0)
+    }
+
+    private func tint(_ kind: HomeWords.TodayKind) -> Color {
+        switch kind {
+        case .pushed: .pushedGreen
+        case .pending: .secondary
+        case .rest: .indigo
+        case .freeze: .cyan
+        }
+    }
+}
+
+/// A symbol in a softly tinted circle, leading a card.
+struct StatusIcon: View {
+    let symbol: String
+    let tint: Color
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: 17, weight: .bold))
+            .foregroundStyle(tint)
+            .frame(width: 40, height: 40)
+            .background(tint.opacity(0.16), in: Circle())
+            .contentTransition(.symbolEffect(.replace))
+            .accessibilityHidden(true)
+    }
+}
+
+/// One of the three numbers under the widget.
+struct StatTile: View {
+    let value: Int
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value.formatted())
+                .font(.system(size: 28, weight: .heavy))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .contentTransition(.numericText(value: Double(value)))
+            Text(label)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .card()
+        .accessibilityElement(children: .combine)
     }
 }
 

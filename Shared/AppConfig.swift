@@ -5,13 +5,6 @@ enum AppConfig {
     static let keychainAccessGroup = "com.kyreshamwell.pushed.shared"
     static let keychainAccount = "github-pat"
     static let usernameDefaultsKey = "github-username"
-    static let widgetWeeksKey = "widget-weeks" // how many weeks the widget displays
-
-    static var widgetWeeks: Int {
-        let stored = sharedDefaults.integer(forKey: widgetWeeksKey)
-        return stored == 0 ? 26 : stored
-    }
-
     static let streakIconKey = "streak-icon"
 
     /// Any single emoji, or `StreakIcon.none` for the bare number.
@@ -35,9 +28,19 @@ enum AppConfig {
             }
             let earlier = sharedDefaults.data(forKey: customStyleKey)
                 .flatMap { try? JSONDecoder().decode(CustomWidgetStyle.self, from: $0) }
-            return .starting(with: earlier ?? .default)
+            // Someone who connected before 1.3 and never saved a style had a
+            // Daily Rotation of just My Style, so their widgets keep it.
+            let connected = !(sharedDefaults.string(forKey: usernameDefaultsKey) ?? "").isEmpty
+            return .starting(with: earlier ?? .default, rotating: connected)
         }
         set { sharedDefaults.set(try? JSONEncoder().encode(newValue), forKey: styleLibraryKey) }
+    }
+
+    /// Saves the library once if nothing is saved yet, so the rotation a
+    /// new install starts with doesn't change when it connects.
+    static func settleStyleLibrary() {
+        guard sharedDefaults.data(forKey: styleLibraryKey) == nil else { return }
+        styleLibrary = styleLibrary
     }
 
     static let dayOffMarkKey = "day-off-mark"
@@ -99,7 +102,7 @@ enum AppConfig {
     // MARK: - Notifications
     //
     // Lives in the shared container because the widget extension reconciles
-    // notifications too — its timeline refresh is the background hook that
+    // notifications too: its timeline refresh is the background hook that
     // cancels a nudge once you've actually pushed.
 
     enum Keys {
@@ -117,7 +120,7 @@ enum AppConfig {
     }
 
     /// `integer(forKey:)` can't tell "unset" from "zero", which matters for an
-    /// hour of 0 — so unset falls through to the documented default.
+    /// hour of 0, so unset falls through to the documented default.
     private static func storedInt(_ key: String, default fallback: Int) -> Int {
         (sharedDefaults.object(forKey: key) as? Int) ?? fallback
     }

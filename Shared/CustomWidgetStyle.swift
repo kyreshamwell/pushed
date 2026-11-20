@@ -28,6 +28,15 @@ struct CustomWidgetStyle: Codable, Equatable, Sendable {
     var minimal = false
     /// How heavy the big number is.
     var weight: WeightChoice = .bold
+    /// Squares shaded by how busy each day was, or the Marks symbols (a dot,
+    /// ×, F or R) drawn in the squares color. Styles saved before there was
+    /// a choice are squares.
+    var cellMode: CellMode = .squares
+    /// Whether the streak number takes the text color instead of the square
+    /// color. Looks seeded from Classic, Terminal, Paper and Marks keep their
+    /// number in the text color, as those looks draw it. Styles saved before
+    /// there was a choice keep the square color.
+    var numberUsesTextColor = false
 
     /// Where a new custom style starts: coral squares on a midnight gradient,
     /// a look none of the built-in styles cover.
@@ -67,13 +76,17 @@ struct CustomWidgetStyle: Codable, Equatable, Sendable {
 // MARK: - Choices
 
 enum CellShapeChoice: String, Codable, CaseIterable, Identifiable, Sendable {
-    case square, rounded, dot, diamond, hexagon, heart, star
+    case square
+    /// GitHub's near-square corners, as Classic and Marks draw them.
+    case soft
+    case rounded, dot, diamond, hexagon, heart, star
 
     var id: String { rawValue }
 
     var name: String {
         switch self {
         case .square: "Square"
+        case .soft: "Soft square"
         case .rounded: "Rounded"
         case .dot: "Dot"
         case .diamond: "Diamond"
@@ -87,14 +100,21 @@ enum CellShapeChoice: String, Codable, CaseIterable, Identifiable, Sendable {
     var cornerFraction: CGFloat {
         switch self {
         case .square: 0
+        case .soft: 0.18
         case .dot: 0.5
         default: 0.28
         }
     }
 
+    /// The smallest corner radius in points, so a soft square still looks
+    /// soft when the cells are tiny.
+    var minimumCorner: CGFloat {
+        self == .soft ? 2 : 0
+    }
+
     var form: CellForm {
         switch self {
-        case .square, .rounded, .dot: .box
+        case .square, .soft, .rounded, .dot: .box
         case .diamond: .diamond
         case .hexagon: .hexagon
         case .heart: .heart
@@ -232,8 +252,20 @@ extension CustomWidgetStyle {
         return backdrop.allSatisfy { $0.contrast(with: missedSquares) >= 1.15 }
     }
 
+    /// White or near-black: the color every word is drawn in.
+    private var textColor: Color {
+        usesLightText ? Color.white : RGBAColor.ink.color
+    }
+
+    /// The streak number: the square color when it reads against the
+    /// backdrop, otherwise the text color, which is also what a style that
+    /// asks for it gets.
+    var numberColor: Color {
+        numberUsesTextColor || !squaresStandOut ? textColor : squares.color
+    }
+
     var theme: WidgetTheme {
-        let ink = usesLightText ? Color.white : RGBAColor.ink.color
+        let ink = textColor
         let fill = squares.color
         let accent = squaresStandOut ? fill : ink
         return WidgetTheme(
@@ -244,23 +276,90 @@ extension CustomWidgetStyle {
                 + [0.35, 0.55, 0.78, 1].map { fill.opacity($0) },
             primaryText: ink,
             secondaryText: ink.opacity(0.7),
-            numberFill: AnyShapeStyle(accent),
+            numberFill: AnyShapeStyle(numberColor),
             pushed: accent,
             pending: ink.opacity(0.7),
             cornerFraction: shape.cornerFraction,
+            minimumCorner: shape.minimumCorner,
             glows: glows,
             fontDesign: font.design,
-            // The square color could be anything, orange included, so "not
-            // yet" is a ring instead of a color that might match it.
-            ringsPending: true,
             spacing: spacing.scale,
             hidesText: minimal,
             form: shape.form,
             fontWidth: font.width,
             numberWeight: weight.weight,
             freeze: freezeColor,
-            missed: missedSquares?.color
+            missed: missedSquares?.color,
+            cellMode: cellMode,
+            // Marks draws every symbol in the squares color, so picking one
+            // color recolors the whole graph.
+            ink: fill
         )
+    }
+}
+
+// MARK: - Starting from a built-in look
+
+extension CustomWidgetStyle {
+    /// The closest custom style to a built-in look: where customizing one
+    /// starts, so the first edit changes one thing and not everything.
+    ///
+    /// A custom style has one square color stepped up in brightness, one
+    /// linear backdrop and one typeface, so some looks can only be
+    /// approximated: Aurora's teal-to-violet squares settle on its teal,
+    /// its corner glows become a gradient, Terminal loses its scanlines and
+    /// Paper's serif covers the words as well as the number. Aurora's and
+    /// Ember's gradient numbers take the square color; every other look
+    /// keeps its number in the text color, so recoloring the squares leaves
+    /// the number alone, as it does on the built-in look.
+    static func seeded(from style: WidgetStyle) -> CustomWidgetStyle {
+        switch style {
+        case .classic, .rotation:
+            // A custom style can't follow light and dark, so Classic starts
+            // from GitHub's dark graph.
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x0D1117), backgroundEnd: RGBAColor(hex: 0x0D1117), usesGradient: false,
+                squares: RGBAColor(hex: 0x39D353), shape: .soft, font: .standard, glows: false,
+                emptySquares: RGBAColor(hex: 0x161B22),
+                numberUsesTextColor: true
+            )
+        case .aurora:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x0F2D3B), backgroundEnd: RGBAColor(hex: 0x252448), usesGradient: true,
+                squares: RGBAColor(hex: 0x6EE7D8), shape: .rounded, font: .standard, glows: true,
+                emptySquares: RGBAColor(red: 1, green: 1, blue: 1, opacity: 0.08)
+            )
+        case .ember:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x2E140A), backgroundEnd: RGBAColor(hex: 0x140B08), usesGradient: true,
+                squares: RGBAColor(hex: 0xF2761B), shape: .rounded, font: .standard, glows: true,
+                emptySquares: RGBAColor(hex: 0x2A1A14)
+            )
+        case .terminal:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x0B1A10), backgroundEnd: RGBAColor(hex: 0x030604), usesGradient: true,
+                squares: RGBAColor(hex: 0x22C55E), shape: .square, font: .monospaced, glows: false,
+                emptySquares: RGBAColor(hex: 0x0E1A12),
+                numberUsesTextColor: true
+            )
+        case .paper:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0xF7F2E8), backgroundEnd: RGBAColor(hex: 0xEDE5D6), usesGradient: true,
+                squares: RGBAColor(hex: 0x24211D), shape: .dot, font: .serif, glows: false,
+                emptySquares: RGBAColor(hex: 0xE2DACB),
+                numberUsesTextColor: true
+            )
+        case .marks:
+            CustomWidgetStyle(
+                background: RGBAColor(hex: 0x111113), backgroundEnd: RGBAColor(hex: 0x111113), usesGradient: false,
+                squares: RGBAColor(hex: 0xF2F2F2), shape: .soft, font: .standard, glows: false,
+                emptySquares: RGBAColor(red: 1, green: 1, blue: 1, opacity: 0.045),
+                cellMode: .marks,
+                numberUsesTextColor: true
+            )
+        case .custom:
+            .default
+        }
     }
 }
 
@@ -269,7 +368,8 @@ extension CustomWidgetStyle {
 extension CustomWidgetStyle {
     private enum CodingKeys: String, CodingKey {
         case background, backgroundEnd, usesGradient, squares, shape, font, glows
-        case emptySquares, missedSquares, spacing, minimal, weight
+        case emptySquares, missedSquares, spacing, minimal, weight, cellMode
+        case numberUsesTextColor
     }
 
     /// A field that's missing or unreadable (one added in a later version, or
@@ -293,6 +393,8 @@ extension CustomWidgetStyle {
         spacing = value(.spacing, fallback.spacing)
         minimal = value(.minimal, fallback.minimal)
         weight = value(.weight, fallback.weight)
+        cellMode = value(.cellMode, fallback.cellMode)
+        numberUsesTextColor = value(.numberUsesTextColor, fallback.numberUsesTextColor)
     }
 }
 

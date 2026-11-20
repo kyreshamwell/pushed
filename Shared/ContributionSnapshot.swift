@@ -5,10 +5,16 @@ struct ContributionSnapshot: Codable {
     // GitHub intensity levels 0-4, oldest first, trimmed to whole weeks so
     // column 0 of the grid is a real Sunday-Saturday week like on github.com.
     let recentLevels: [Int]
-    // "yyyy-MM-dd" of the final entry in recentLevels — anchors every square
+    // "yyyy-MM-dd" of the final entry in recentLevels. It anchors every square
     // to a real date so the grid can draw month/weekday labels.
     let lastDate: String
     let fetchedAt: Date
+    /// Contributions on the last day, as GitHub counts them. Nil for data
+    /// saved before 1.3, which only kept the levels.
+    var lastDayCount: Int? = nil
+    /// Contributions on each day of `recentLevels`, lined up with it. Nil for
+    /// data saved before the streak and year screens, which only kept levels.
+    var recentCounts: [Int]? = nil
 
     static let defaultsKey = "latest-contribution-snapshot"
 
@@ -32,12 +38,15 @@ struct ContributionSnapshot: Codable {
         let weeksToKeep = min(fullWeekCount, 52)
         let start = max(0, days.count - trailingPartial - weeksToKeep * 7)
         let recent = days[start...].map(\.level)
+        let counts = days[start...].map(\.contributionCount)
 
         return ContributionSnapshot(
             totalContributions: calendar.totalContributions,
             recentLevels: Array(recent),
             lastDate: days.last?.date ?? "",
-            fetchedAt: Date()
+            fetchedAt: Date(),
+            lastDayCount: days.last?.contributionCount,
+            recentCounts: Array(counts)
         )
     }
 

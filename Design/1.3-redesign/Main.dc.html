@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fill the frame</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; height: 980px; box-sizing: border-box; padding: 64px; background: #0B0B0C; color: #F5F5F7; font-family: Inter, -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; gap: 48px">
+  <div style="display: flex; flex-direction: column; gap: 12px; max-width: 860px">
+    <h1 style="margin: 0; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">Fill the frame</h1>
+    <p style="margin: 0; font-size: 17px; line-height: 1.5; color: #A1A1A6">Squares are sized from the widget's height, so seven rows always reach top to bottom. Then the widget shows as many weeks as fit across. The streak and today's status move into one slim line instead of a footer row.</p>
+  </div>
+
+  <div style="display: flex; gap: 64px; align-items: flex-start">
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8E8E93">Now · 1.2</span>
+      <dc-import name="Widget" look="classic" family="before" hint-size="364px,170px"></dc-import>
+      <span style="font-size: 14px; color: #A1A1A6; max-width: 364px; line-height: 1.45">26 tiny squares across, about half the height used, labels and a footer eating the rest.</span>
+    </div>
+    <div style="display: flex; align-items: center; height: 214px">
+      <svg width="40" height="24" viewBox="0 0 40 24" fill="none" stroke="#636366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h34M28 4l8 8-8 8"></path></svg>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #3FD26A">Redesign</span>
+      <dc-import name="Widget" look="classic" family="medium" hint-size="364px,170px"></dc-import>
+      <span style="font-size: 14px; color: #A1A1A6; max-width: 364px; line-height: 1.45">22 weeks of bigger squares, edge to edge. Streak and "Pushed today" share one line.</span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 48px; align-items: flex-start">
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8E8E93">Small · 9 weeks</span>
+      <dc-import name="Widget" look="classic" family="small" hint-size="170px,170px"></dc-import>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8E8E93">Medium · 22 weeks</span>
+      <dc-import name="Widget" look="classic" family="medium" pending="{{ true }}" hint-size="364px,170px"></dc-import>
+      <span style="font-size: 14px; color: #A1A1A6; max-width: 364px; line-height: 1.45">Not pushed yet: the dot empties, nothing else moves.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8E8E93">Large · 40 weeks, months and days labeled</span>
+      <dc-import name="Widget" look="classic" family="large" hint-size="364px,382px"></dc-import>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 300px; padding-top: 30px">
+      <span style="font-size: 15px; font-weight: 600">Today is ringed</span>
+      <span style="font-size: 14px; color: #A1A1A6; line-height: 1.5; padding-bottom: 14px">A thin ring around today's square on every size, so "now" is always easy to find.</span>
+      <span style="font-size: 15px; font-weight: 600">Labels only on Large</span>
+      <span style="font-size: 14px; color: #A1A1A6; line-height: 1.5; padding-bottom: 14px">Months above each row and Mon, Wed, Fri down the side. Top row is older, bottom row ends today.</span>
+      <span style="font-size: 15px; font-weight: 600">No range setting</span>
+      <span style="font-size: 14px; color: #A1A1A6; line-height: 1.5">Each size always shows as many weeks as fill it, so there's nothing to pick and no half-empty widgets.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

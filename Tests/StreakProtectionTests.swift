@@ -412,6 +412,15 @@ final class StreakProtectionTests: XCTestCase {
         XCTAssertEqual(snap.history(asOf: date("2026-10-14")).pushedThisWeek, 3)
     }
 
+    func testLastWeekIsTheSundayToSaturdayBeforeThisOne() {
+        // Wednesday the 14th: last week ran Sunday the 4th to Saturday the 10th.
+        let snap = snapshot(endingOn: "2026-10-14", ".#.###. .###")
+        let lastWeek = snap.history(asOf: date("2026-10-14")).lastWeek
+
+        XCTAssertEqual(lastWeek.count, 7)
+        XCTAssertEqual(lastWeek.map(\.isActive), [false, true, false, true, true, true, false])
+    }
+
     func testUndoingAClaimPutsTheDayBack() {
         let snap = snapshot(endingOn: "2026-10-15", ".#####. .##..")
         var protection = resting(sunday, saturday)
@@ -575,5 +584,72 @@ final class StreakProtectionTests: XCTestCase {
 
         XCTAssertEqual(protection.claims, ["2026-10-14": .rest])
         XCTAssertEqual(protection.schedules, [.init(from: "2024-01-01", weekdays: [1, 7])])
+    }
+}
+
+// MARK: - Covering yesterday after taking today off
+
+extension StreakProtectionTests {
+    /// Sunday the 1st through Sunday the 15th pushed, then Monday the 16th and
+    /// Tuesday the 17th empty. Read on the Tuesday.
+    private var missedMonday: ContributionSnapshot {
+        snapshot(endingOn: "2026-11-17", "####### ####### #..")
+    }
+
+    func testTodayOffersNothingWhileYesterdayIsStillEmpty() {
+        let history = missedMonday.history(protection: .initial, asOf: date("2026-11-17"))
+        XCTAssertEqual(history.gap, 2)
+        XCTAssertTrue(history.canClaim(.freeze, daysAgo: 0), "the claim itself would hold")
+        XCTAssertFalse(history.todayCanKeepStreak, "but a freeze today can't keep a streak that broke yesterday")
+
+        var protection = StreakProtection.initial
+        protection.claim(.freeze, on: history.date(daysAgo: 1)!)
+        let saved = missedMonday.history(protection: protection, asOf: date("2026-11-17"))
+        XCTAssertEqual(saved.gap, 1)
+        XCTAssertTrue(saved.todayCanKeepStreak, "with yesterday covered, today's options come back")
+    }
+
+    func testAFreezeOnTodayCanMoveBackToSaveYesterday() {
+        let protection = StreakProtection(claims: ["2026-11-17": .freeze])
+        let history = missedMonday.history(protection: protection, asOf: date("2026-11-17"))
+
+        XCTAssertEqual(history.today, .off(.freeze))
+        XCTAssertEqual(history.streak, 0, "today's freeze kept nothing")
+        XCTAssertTrue(history.canSaveStreak)
+        XCTAssertTrue(history.canClaim(.freeze, daysAgo: 1))
+        XCTAssertTrue(history.claimMovesTodaysDayOff(.freeze, daysAgo: 1), "one freeze a month, so it moves")
+
+        var moved = protection
+        moved.claim(.freeze, on: history.date(daysAgo: 1)!)
+        let after = missedMonday.history(protection: moved, asOf: date("2026-11-17"))
+        XCTAssertEqual(after.streak, 15, "the streak is back")
+        XCTAssertEqual(after.today, .pending, "and today needs a push again")
+        XCTAssertNil(after.claim(daysAgo: 0))
+        XCTAssertFalse(after.canClaim(.freeze, daysAgo: 0), "November's freeze is spent")
+        XCTAssertFalse(after.canSaveStreak)
+    }
+
+    func testAFreezeEitherSideOfAMonthIsNotAMove() {
+        // Monday 30 November missed, Tuesday 1 December frozen.
+        let snap = snapshot(endingOn: "2026-12-01", "####### ####### #..")
+        let protection = StreakProtection(claims: ["2026-12-01": .freeze])
+        let history = snap.history(protection: protection, asOf: date("2026-12-01"))
+
+        XCTAssertTrue(history.canClaim(.freeze, daysAgo: 1), "November still has its own")
+        XCTAssertFalse(history.claimMovesTodaysDayOff(.freeze, daysAgo: 1))
+    }
+
+    func testTheWeeksLastRestDayCanMoveBackToSaveYesterday() {
+        // Tuesday is the one rest day, so it's today's until yesterday takes it.
+        let history = missedMonday.history(protection: resting(3), asOf: date("2026-11-17"))
+
+        XCTAssertEqual(history.today, .off(.rest))
+        XCTAssertTrue(history.canClaim(.rest, daysAgo: 1))
+        XCTAssertTrue(history.claimMovesTodaysDayOff(.rest, daysAgo: 1))
+        XCTAssertFalse(history.claimMovesTodaysDayOff(.freeze, daysAgo: 1), "the freeze is a month's, not the week's")
+
+        let twoRestDays = missedMonday.history(protection: resting(2, 3), asOf: date("2026-11-17"))
+        XCTAssertEqual(twoRestDays.days.suffix(2).map(\.off), [.rest, .rest], "Monday is a rest day of its own")
+        XCTAssertEqual(twoRestDays.gap, 1)
     }
 }

@@ -18,48 +18,24 @@ struct WidgetOptionsIntent: WidgetConfigurationIntent {
     @Parameter(title: "Layout", default: .graph)
     var layout: WidgetLayout
 
-    /// Left at "Same as app", a widget follows the time range set in the
-    /// app, which is what every widget did before this was a choice.
-    @Parameter(title: "Range", default: .app)
-    var range: WidgetRange
-
     @Parameter(title: "Show", default: .streak)
     var stat: WidgetStat
 
-    /// The saved-style picker only shows while Style is set to Custom, and
-    /// Range only for the layouts with a graph in them.
+    /// The saved-style picker only shows while Style is set to Custom.
+    /// There's no range to pick: every widget shows as many weeks as fill it.
     static var parameterSummary: some ParameterSummary {
         When(\.$style, .equalTo, .custom) {
-            When(\.$layout, .equalTo, .week) {
-                Summary {
-                    \.$style
-                    \.$saved
-                    \.$layout
-                    \.$stat
-                }
-            } otherwise: {
-                Summary {
-                    \.$style
-                    \.$saved
-                    \.$layout
-                    \.$range
-                    \.$stat
-                }
+            Summary {
+                \.$style
+                \.$saved
+                \.$layout
+                \.$stat
             }
         } otherwise: {
-            When(\.$layout, .equalTo, .week) {
-                Summary {
-                    \.$style
-                    \.$layout
-                    \.$stat
-                }
-            } otherwise: {
-                Summary {
-                    \.$style
-                    \.$layout
-                    \.$range
-                    \.$stat
-                }
+            Summary {
+                \.$style
+                \.$layout
+                \.$stat
             }
         }
     }
@@ -73,6 +49,7 @@ extension WidgetStyle: AppEnum {
         .ember: "Ember",
         .terminal: "Terminal",
         .paper: "Paper",
+        .marks: "Marks",
         .custom: "Custom",
         .rotation: "Daily Rotation",
     ]
@@ -84,17 +61,6 @@ extension WidgetLayout: AppEnum {
         .graph: "Graph",
         .streak: "Big streak",
         .week: "This week",
-    ]
-}
-
-extension WidgetRange: AppEnum {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Range"
-    static var caseDisplayRepresentations: [WidgetRange: DisplayRepresentation] = [
-        .app: "Same as app",
-        .month: "1 month",
-        .threeMonths: "3 months",
-        .sixMonths: "6 months",
-        .year: "1 year",
     ]
 }
 

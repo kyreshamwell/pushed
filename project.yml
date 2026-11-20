@@ -6,12 +6,12 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    # Set here rather than in Xcode — `xcodegen generate` rewrites the pbxproj
+    # Set here rather than in Xcode. `xcodegen generate` rewrites the pbxproj
     # from this file, so a team picked in the UI is wiped on the next run.
     DEVELOPMENT_TEAM: KJ39PZWS6C
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "1.2"
-    CURRENT_PROJECT_VERSION: "13"
+    MARKETING_VERSION: "1.3"
+    CURRENT_PROJECT_VERSION: "17"
 
 packages: {}
 
@@ -34,7 +34,7 @@ targets:
           - fetch
         BGTaskSchedulerPermittedIdentifiers:
           - com.kyreshamwell.pushed.refresh
-        # These two live here, not in INFOPLIST_KEY_* build settings — those are
+        # These two live here, not in INFOPLIST_KEY_* build settings. Those are
         # only consulted when GENERATE_INFOPLIST_FILE is on, and this target ships
         # an explicit plist. As build settings they compiled fine and did nothing,
         # which left the app free to rotate into a landscape the grid never sized for.
@@ -86,7 +86,7 @@ targets:
         SKIP_INSTALL: true
 
   # Logic tests: compiles Shared/ directly into the test bundle, so no host
-  # app or signing is needed — plain `xcodebuild test` on any simulator.
+  # app or signing is needed: plain `xcodebuild test` on any simulator.
   PushedTests:
     type: bundle.unit-test
     platform: iOS

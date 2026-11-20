@@ -36,7 +36,7 @@ struct NotificationContext {
     var calendar: Calendar = Calendar(identifier: .gregorian)
 }
 
-/// Decides *what* should be scheduled. Pure — no UNUserNotificationCenter, no
+/// Decides *what* should be scheduled. Pure: no UNUserNotificationCenter, no
 /// network, no wall clock. Everything about number accuracy lives here.
 ///
 /// Three rules keep the numbers honest:
@@ -54,7 +54,7 @@ enum NotificationPlanner {
     static let maxSnapshotAge: TimeInterval = 24 * 60 * 60
 
     /// Celebrations are detected on a background refresh that could land at any
-    /// hour, so they get held to daylight. Warnings don't need this — their
+    /// hour, so they get held to daylight. Warnings don't need this: their
     /// fire times are user-chosen by definition.
     static let quietHoursEnd = 8
     static let quietHoursStart = 22
@@ -100,11 +100,11 @@ enum NotificationPlanner {
         guard let expiry = context.tokenExpiry else { return [] }
 
         // Each lead time is its own calendar-triggered notification, queued the
-        // moment we learn the expiry date. These need no background execution —
+        // moment we learn the expiry date. These need no background execution:
         // iOS holds them even if the app is never opened again.
         return [10, 5, 1].compactMap { daysOut -> PlannedNotification? in
             // Anchored to 10am on the target day rather than to the expiry
-            // timestamp minus N days — a token that dies at 03:00 shouldn't
+            // timestamp minus N days. A token that dies at 03:00 shouldn't
             // wake anyone at 03:00 to say so. A lead time already in the past
             // is dropped; there's always a later rung still ahead unless the
             // token is inside its final day, which the 401 path covers.
@@ -114,7 +114,7 @@ enum NotificationPlanner {
             return PlannedNotification(
                 id: "token-expiring-\(daysOut)",
                 title: daysOut == 1 ? "Your GitHub token expires tomorrow" : "Your GitHub token expires in \(daysOut) days",
-                body: "Generate a new one so the widget keeps updating.",
+                body: "Make a new one so the widget keeps updating.",
                 fireDate: fire
             )
         }
@@ -240,7 +240,7 @@ enum NotificationPlanner {
         )
     }
 
-    /// Streak is already gone, so there's no midnight deadline to warn about —
+    /// Streak is already gone, so there's no midnight deadline to warn about:
     /// one notification per firing day, and the frequency tapers the longer the
     /// silence runs. An app that nags daily for a month gets deleted before the
     /// comeback it was hoping for.
@@ -259,7 +259,7 @@ enum NotificationPlanner {
         switch gap {
         case 2:
             // The streak died yesterday. Naming what was lost beats a generic
-            // "you missed a day" — it's the difference between the app knowing
+            // "you missed a day". It's the difference between the app knowing
             // you and not.
             let previous = history.streakBeforeBreak
             if previous >= 7 {
@@ -267,7 +267,7 @@ enum NotificationPlanner {
                 body = "Start the next one today."
             } else {
                 title = "Yesterday's square is empty"
-                body = "Today's isn't — yet."
+                body = "Today's is still open."
             }
             useEvening = false
         case 3:
@@ -333,7 +333,7 @@ enum NotificationPlanner {
 
     /// The milestone to record as already-celebrated when an account is first
     /// connected. Someone who installs mid-streak shouldn't be congratulated
-    /// for a mark they hit before the app existed — but their *next* one should
+    /// for a mark they hit before the app existed, but their *next* one should
     /// still land.
     static func milestoneBaseline(
         for snapshot: ContributionSnapshot?,
@@ -358,7 +358,7 @@ enum NotificationPlanner {
         }
     }
 
-    /// Now, unless now is inside quiet hours — then the next 8am.
+    /// Now, unless now is inside quiet hours. Then the next 8am.
     private static func deliverableTime(_ context: NotificationContext) -> Date {
         let cal = context.calendar
         let hour = cal.component(.hour, from: context.now)
@@ -374,7 +374,7 @@ enum NotificationPlanner {
 
     // MARK: - Fire times
 
-    /// Today's slot, but only if it hasn't passed. Never tomorrow's — see rule 1.
+    /// Today's slot, but only if it hasn't passed. Never tomorrow's (see rule 1).
     private static func middayFire(_ context: NotificationContext) -> Date? {
         todayAt(context.settings.middayHour, context.settings.middayMinute, context)
     }
@@ -390,7 +390,7 @@ enum NotificationPlanner {
     }
 
     /// Builds the time on the *same* calendar day as `day`. Deliberately not
-    /// `date(bySettingHour:of:)` — that searches forward, so asking for 1pm at
+    /// `date(bySettingHour:of:)`: that searches forward, so asking for 1pm at
     /// 3pm hands back tomorrow's 1pm, which would sail past the "never schedule
     /// beyond today" rule. Going through components also keeps DST honest.
     private static func dateOn(_ day: Date, hour: Int, minute: Int, calendar: Calendar) -> Date? {
@@ -408,7 +408,7 @@ enum NotificationPlanner {
     }
 
     /// Scoped to the calendar day so a leftover from yesterday never matches
-    /// today's plan — the scheduler's diff sweeps it away on its own.
+    /// today's plan. The scheduler's diff sweeps it away on its own.
     private static func dailyID(_ slot: String, _ context: NotificationContext) -> String {
         "daily-\(slot)-\(ContributionCalendar.dateFormatter.string(from: context.now))"
     }

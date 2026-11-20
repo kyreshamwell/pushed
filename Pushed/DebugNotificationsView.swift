@@ -2,7 +2,7 @@ import SwiftUI
 import UserNotifications
 
 /// On-device verification surface. The planner's correctness is covered by unit
-/// tests; what this proves is the part tests can't reach — that iOS actually
+/// tests; what this proves is the part tests can't reach: that iOS actually
 /// holds what we queued, at the time we said, with the copy we wrote.
 struct DebugNotificationsView: View {
     @State private var pending: [UNNotificationRequest] = []
@@ -37,7 +37,7 @@ struct DebugNotificationsView: View {
             } header: {
                 Text("Pending (\(pending.count))")
             } footer: {
-                Text("What iOS is actually holding right now — the ground truth for whether scheduling and cancelling work.")
+                Text("What iOS is holding right now. If it's here, scheduling worked.")
             }
 
             Section("Actions") {
@@ -68,14 +68,14 @@ struct DebugNotificationsView: View {
                                 fireDate: Date().addingTimeInterval(10)
                             ))
                             await load()
-                            lastAction = "Queued for 10s — background the app"
+                            lastAction = "Queued for 10 seconds. Leave the app."
                         }
                     }
                 }
             } header: {
                 Text("Fire in 10 seconds")
             } footer: {
-                Text("Background the app after tapping — iOS suppresses banners while the app is in the foreground.")
+                Text("Leave the app after tapping. iOS hides banners while it's open.")
             }
 
             Section {
@@ -96,7 +96,7 @@ struct DebugNotificationsView: View {
             } header: {
                 Text("Simulate contribution state")
             } footer: {
-                Text("Overwrites the cached snapshot with a synthetic one, then reconciles — the real planner path, without needing the right streak in real life. \"Pushed today\" should cancel both day slots.")
+                Text("Swaps in made-up data, then reconciles through the real planner. Pushed today should cancel both day slots.")
             }
 
             Section {
@@ -122,7 +122,7 @@ struct DebugNotificationsView: View {
             } header: {
                 Text("Token simulation")
             } footer: {
-                Text("Set expiry 10 days out and reconcile — three warnings should appear above, dated 10, 5 and 1 days before. Verifies the ladder in seconds instead of over a week.")
+                Text("Set expiry 10 days out and reconcile. Three warnings should appear, 10, 5 and 1 days before.")
             }
 
             if !lastAction.isEmpty {
@@ -139,7 +139,7 @@ struct DebugNotificationsView: View {
             ("evening", "Your 13-day streak ends at midnight", "About 4 hours left."),
             ("dormant", "Your 15-day streak ended", "Start the next one today."),
             ("milestone", "14 days straight", "Two weeks without a gap."),
-            ("token", "Your GitHub token expires in 5 days", "Generate a new one so the widget keeps updating."),
+            ("token", "Your GitHub token expires in 5 days", "Make a new one so the widget keeps updating."),
         ]
     }
 

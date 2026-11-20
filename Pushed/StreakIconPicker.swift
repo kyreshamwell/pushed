@@ -29,8 +29,8 @@ struct StreakIconPicker: View {
                         Text(StreakIcon.label(streak: streak, icon: icon, compact: false))
                             .font(.headline)
                         Text(isTyping
-                             ? "Pick any emoji. Use the keyboard's search to find one fast."
-                             : "Tap the square to choose from every emoji on your keyboard.")
+                             ? "Pick any emoji. Search to find one fast."
+                             : "Tap the square to pick any emoji.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

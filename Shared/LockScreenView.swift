@@ -76,7 +76,7 @@ struct LockScreenView: View {
             WeekStrip(
                 days: history.days(last: 7),
                 today: history.today,
-                theme: WidgetStyle.classic.theme(for: .dark, renderingMode: renderingMode)
+                theme: .lockScreen(renderingMode)
             )
             .frame(height: 13)
         }
@@ -111,5 +111,46 @@ private struct TodayRing: View {
         case .pending:
             Circle().strokeBorder(lineWidth: 3).opacity(0.25)
         }
+    }
+}
+
+extension WidgetTheme {
+    /// The Lock Screen's week strip keeps the look it shipped with: Classic
+    /// as it was before the 1.3 redesign. The home screen looks can change
+    /// freely without moving anything here.
+    static func lockScreen(_ renderingMode: WidgetRenderingMode) -> WidgetTheme {
+        guard renderingMode == .fullColor else {
+            return WidgetTheme(
+                levels: [0.18, 0.4, 0.62, 0.82, 1].map { Color.white.opacity($0) },
+                primaryText: .primary,
+                secondaryText: .secondary,
+                numberFill: AnyShapeStyle(Color.primary),
+                pushed: .primary,
+                pending: .primary,
+                cornerFraction: 0.25,
+                glows: false,
+                fontDesign: .default,
+                isMonochrome: true,
+                freeze: Color.white.opacity(0.62)
+            )
+        }
+        return WidgetTheme(
+            levels: [
+                Color(red: 0.184, green: 0.212, blue: 0.247),
+                Color(red: 0.055, green: 0.267, blue: 0.161),
+                Color(red: 0.000, green: 0.427, blue: 0.196),
+                Color(red: 0.149, green: 0.651, blue: 0.255),
+                Color(red: 0.224, green: 0.827, blue: 0.325),
+            ],
+            primaryText: .primary,
+            secondaryText: .secondary,
+            numberFill: AnyShapeStyle(Color.primary),
+            pushed: .green,
+            pending: .orange,
+            cornerFraction: 0.25,
+            glows: false,
+            fontDesign: .default,
+            ringsPending: false
+        )
     }
 }

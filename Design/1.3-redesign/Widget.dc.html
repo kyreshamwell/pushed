@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pushed widget</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: {{W}}px; height: {{H}}px; border-radius: {{corner}}px; background: {{bg}}; overflow: hidden; position: relative; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: {{headGap}}px; font-family: {{font}}; color: {{text}}">
+  <sc-if value="{{scan}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 3px); pointer-events: none"></div>
+  </sc-if>
+
+  <sc-if value="{{isSmall}}" hint-placeholder-val="{{ false }}">
+    <div style="height: 22px; display: flex; align-items: center; justify-content: space-between; position: relative">
+      <div style="display: flex; align-items: center; gap: 5px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.6 1.2 2.5 2 2.5-.5-3 0-5.5 1-8z"></path></svg>
+        <span style="font-family: {{numFont}}; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1">{{streak}}</span>
+      </div>
+      <div style="width: 18px; height: 18px; border-radius: 9px; background: {{todayBg}}; border: 1.5px solid {{todayRing}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center">
+        <sc-if value="{{pushed}}" hint-placeholder-val="{{ true }}">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="{{checkInk}}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isMedium}}" hint-placeholder-val="{{ true }}">
+    <div style="height: 22px; display: flex; align-items: baseline; justify-content: space-between; position: relative">
+      <div style="display: flex; align-items: baseline; gap: 6px">
+        <span style="font-family: {{numFont}}; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1">{{streak}}</span>
+        <span style="font-size: 12px; font-weight: 500; color: {{sub}}">day streak</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: {{statusInk}}">
+        <span style="width: 7px; height: 7px; border-radius: 4px; background: {{todayDot}}; border: 1.5px solid {{todayRing}}; box-sizing: border-box; display: inline-block"></span>
+        <span>{{statusText}}</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isLarge}}" hint-placeholder-val="{{ false }}">
+    <div style="height: 88px; display: flex; justify-content: space-between; align-items: flex-start; position: relative">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-family: {{numFont}}; font-size: 56px; font-weight: 700; letter-spacing: -0.04em; line-height: 0.95; background: {{numBg}}; -webkit-background-clip: text; background-clip: text; color: {{numColor}}">{{streak}}</span>
+        <span style="font-size: 13px; font-weight: 500; color: {{sub}}">day streak</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: {{statusInk}}">
+          <span style="width: 7px; height: 7px; border-radius: 4px; background: {{todayDot}}; border: 1.5px solid {{todayRing}}; box-sizing: border-box; display: inline-block"></span>
+          <span>{{statusText}}</span>
+        </div>
+        <div style="display: flex; gap: 16px; text-align: right">
+          <div style="display: flex; flex-direction: column"><span style="font-family: {{numFont}}; font-size: 17px; font-weight: 700">41</span><span style="font-size: 11px; color: {{sub}}">best</span></div>
+          <div style="display: flex; flex-direction: column"><span style="font-family: {{numFont}}; font-size: 17px; font-weight: 700">812</span><span style="font-size: 11px; color: {{sub}}">this year</span></div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isBefore}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; flex-direction: column; gap: 6px; position: relative; flex: 1">
+      <div style="display: flex; justify-content: space-between; padding-left: 28px; padding-right: 30px; font-size: 8px; color: {{sub}}">
+        <span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span>
+      </div>
+      <div style="display: flex; gap: 6px">
+        <div style="width: 22px; display: flex; flex-direction: column; justify-content: space-around; font-size: 8px; color: {{sub}}; height: 77px; padding: 8px 0; box-sizing: border-box">
+          <span>Mon</span><span>Wed</span><span>Fri</span>
+        </div>
+        <sc-for list="{{bands}}" as="band" hint-placeholder-count="1">
+          <div style="display: grid; grid-template-rows: repeat(7, {{band.c}}px); grid-auto-flow: column; grid-auto-columns: {{band.c}}px; column-gap: {{band.colGap}}px; row-gap: {{band.rowGap}}px">
+            <sc-for list="{{band.cells}}" as="cell" hint-placeholder-count="40">
+              <div style="width: {{cell.c}}px; height: {{cell.c}}px; border-radius: {{cell.r}}px; background: {{cell.bg}}"></div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex: 1"></div>
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: {{sub}}">
+        <span style="color: {{text}}; font-weight: 600">3</span>
+        <span>committed today</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showGrid}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; flex-direction: column; gap: 14px; position: relative">
+      <sc-for list="{{bands}}" as="band" hint-placeholder-count="1">
+        <div style="display: flex; flex-direction: column; gap: 3px">
+          <sc-if value="{{band.labels}}" hint-placeholder-val="{{ false }}">
+            <div style="position: relative; height: 12px; margin-left: 26px">
+              <sc-for list="{{band.months}}" as="m" hint-placeholder-count="5">
+                <span style="position: absolute; left: {{m.x}}px; top: 0; font-size: 10px; line-height: 12px; font-weight: 600; color: {{band.sub}}">{{m.t}}</span>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="display: flex; gap: 4px">
+            <sc-if value="{{band.labels}}" hint-placeholder-val="{{ false }}">
+              <div style="width: 22px; display: flex; flex-direction: column; row-gap: {{band.rowGap}}px">
+                <sc-for list="{{band.dayRows}}" as="d" hint-placeholder-count="7">
+                  <span style="height: {{d.h}}px; font-size: 10px; line-height: {{d.h}}px; font-weight: 600; color: {{band.sub}}">{{d.t}}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div style="display: grid; grid-template-rows: repeat(7, {{band.c}}px); grid-auto-flow: column; grid-auto-columns: {{band.c}}px; column-gap: {{band.colGap}}px; row-gap: {{band.rowGap}}px; height: {{band.h}}px">
+              <sc-for list="{{band.cells}}" as="cell" hint-placeholder-count="60">
+                <div style="width: {{cell.c}}px; height: {{cell.c}}px; border-radius: {{cell.r}}px; background: {{cell.bg}}; box-shadow: {{cell.glow}}; outline: {{cell.outline}}; outline-offset: 1.5px; display: flex; align-items: center; justify-content: center; color: {{cell.ink}}; font-size: {{cell.fs}}px; font-weight: 700; line-height: 1">
+                  <sc-if value="{{cell.isDot}}" hint-placeholder-val="{{ false }}">
+                    <span style="width: {{cell.ds}}px; height: {{cell.ds}}px; border-radius: 50%; background: {{cell.ink}}; opacity: {{cell.op}}"></span>
+                  </sc-if>
+                  <sc-if value="{{cell.isText}}" hint-placeholder-val="{{ false }}">
+                    <span style="opacity: {{cell.op}}">{{cell.glyph}}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"look":{"editor":"enum","options":["classic","aurora","ember","terminal","paper","marks"],"default":"classic"},"family":{"editor":"enum","options":["small","medium","large","before"],"default":"large"},"shape":{"editor":"enum","options":["auto","square","rounded","dot"],"default":"auto"},"accent":{"editor":"color","default":""},"pending":{"editor":"boolean","default":false},"$preview":{"width":364,"height":382}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const P = this.props;
+    const lookId = P.look || 'classic';
+    const fam = P.family || 'large';
+    const pending = !!P.pending;
+    const SANS = "Inter, -apple-system, system-ui, sans-serif";
+
+    const LOOKS = {
+      classic: {
+        bg: '#0D1117',
+        levels: ['#161B22', '#0E4429', '#006D32', '#26A641', '#39D353'],
+        text: '#E6EDF3', sub: '#8B949E', accent: '#39D353',
+        font: SANS, numFont: SANS,
+        shape: 'square', glow: false, scan: false, numBg: 'none', numColor: '#E6EDF3'
+      },
+      aurora: {
+        bg: 'radial-gradient(90% 120% at 0% 0%, rgba(45,212,191,0.30), transparent 55%), radial-gradient(90% 120% at 100% 100%, rgba(167,139,250,0.34), transparent 60%), #0A0F24',
+        levels: ['rgba(255,255,255,0.08)', '#1C4E63', '#2A8C93', '#6EE7D8', '#E4D7FF'],
+        text: '#F2F5FF', sub: 'rgba(226,232,255,0.66)', accent: '#6EE7D8',
+        font: SANS, numFont: SANS,
+        shape: 'rounded', glow: true, scan: false,
+        numBg: 'linear-gradient(120deg, #A7F3E8, #E4D7FF)', numColor: 'transparent'
+      },
+      ember: {
+        bg: 'radial-gradient(80% 90% at 100% 0%, rgba(234,88,12,0.28), transparent 60%), radial-gradient(70% 70% at 0% 100%, rgba(250,204,21,0.08), transparent 60%), #140B08',
+        levels: ['#2A1A14', '#6B2410', '#B8400E', '#F2761B', '#FFC46B'],
+        text: '#FFF4E8', sub: 'rgba(253,200,150,0.72)', accent: '#F2761B',
+        font: SANS, numFont: SANS,
+        shape: 'rounded', glow: true, scan: false,
+        numBg: 'linear-gradient(180deg, #FFE1A6, #F2761B)', numColor: 'transparent'
+      },
+      terminal: {
+        bg: 'radial-gradient(90% 90% at 50% 40%, #0B1A10, #030604)',
+        levels: ['#0E1A12', '#14532D', '#15803D', '#22C55E', '#86EFAC'],
+        text: '#86EFAC', sub: '#4E8F62', accent: '#22C55E',
+        font: "'JetBrains Mono', ui-monospace, monospace", numFont: "'JetBrains Mono', ui-monospace, monospace",
+        shape: 'sharp', glow: false, scan: true, numBg: 'none', numColor: '#86EFAC'
+      },
+      paper: {
+        bg: 'linear-gradient(180deg, #F7F2E8, #EDE5D6)',
+        levels: ['#E2DACB', '#C9BBA2', '#9A8970', '#5E5243', '#24211D'],
+        text: '#24211D', sub: '#6E6456', accent: '#24211D',
+        font: SANS, numFont: "Fraunces, Georgia, serif",
+        shape: 'dot', glow: false, scan: false, numBg: 'none', numColor: '#24211D'
+      },
+      marks: {
+        bg: '#111113',
+        levels: ['rgba(255,255,255,0.045)', 'rgba(255,255,255,0.045)', 'rgba(255,255,255,0.045)', 'rgba(255,255,255,0.045)', 'rgba(255,255,255,0.045)'],
+        text: '#F2F2F2', sub: '#8E8E93', accent: '#F2F2F2', ink: '#F2F2F2',
+        font: SANS, numFont: SANS,
+        shape: 'square', glow: false, scan: false, numBg: 'none', numColor: '#F2F2F2', marks: true
+      }
+    };
+    const BEFORE = {
+      bg: '#1C1C1E', levels: ['#2F3640', '#0E4429', '#006D32', '#26A641', '#39D353'],
+      text: '#E6EDF3', sub: '#8E8E93', accent: '#39D353',
+      font: "-apple-system, system-ui, sans-serif", numFont: "-apple-system, system-ui, sans-serif",
+      shape: 'square', glow: false, scan: false, numBg: 'none', numColor: '#E6EDF3'
+    };
+    const L = fam === 'before' ? BEFORE : (LOOKS[lookId] || LOOKS.classic);
+
+    let levels = L.levels;
+    const accentOverride = P.accent && P.accent.length > 3 ? P.accent : null;
+    if (accentOverride && !L.marks) {
+      const base = L.levels[0];
+      levels = [base].concat([32, 55, 78, 100].map((p) => 'color-mix(in srgb, ' + accentOverride + ' ' + p + '%, ' + base + ')'));
+    }
+    const accent = accentOverride || L.accent;
+    const ink = accentOverride || L.ink || L.text;
+
+    // Deterministic sample year: 51 full weeks plus Sun, Mon, Tue of this week.
+    const total = 51 * 7 + 3;
+    const seed = 7;
+    const rnd = (i) => { const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453; return x - Math.floor(x); };
+    const lv = [];
+    for (let i = 0; i < total; i++) {
+      const rec = i / total;
+      const wd = i % 7;
+      let p = 0.26 + 0.5 * rec;
+      if (wd === 0 || wd === 6) p *= 0.45;
+      let v = 0;
+      if (rnd(i) < p) { v = 1 + Math.floor(rnd(i + 500) * (2.2 + rec * 2)); if (v > 4) v = 4; }
+      lv.push(v);
+    }
+    for (let i = total - 12; i < total; i++) if (lv[i] === 0) lv[i] = 1 + Math.floor(rnd(i + 900) * 3);
+    // Two freeze days in the recent past (weekdays).
+    const freezes = {};
+    [total - 16, total - 40].forEach((i) => { lv[i] = 0; freezes[i] = true; });
+    if (pending) lv[total - 1] = 0;
+    const streak = pending ? 11 : 12;
+
+    const shape = (P.shape && P.shape !== 'auto') ? P.shape : L.shape;
+    const radiusFor = (c) => shape === 'dot' ? c / 2 : shape === 'rounded' ? c * 0.3 : shape === 'square' ? Math.max(2, c * 0.18) : 0;
+    const ringInk = L.text;
+
+    const cellFor = (v, idx, c) => {
+      const isToday = idx === total - 1;
+      const base = {
+        c, r: radiusFor(c), bg: levels[v],
+        glow: (L.glow && v >= 4) ? ('0 0 ' + Math.round(c * 0.7) + 'px ' + levels[4]) : 'none',
+        outline: isToday ? ('1.5px solid ' + ringInk) : 'none',
+        isDot: false, isText: false, glyph: '', ink, fs: Math.round(c * 0.72), ds: 0, op: 1
+      };
+      if (!L.marks) return base;
+      const wd = idx % 7;
+      if (v > 0) {
+        base.isDot = true;
+        base.ds = Math.round(c * 0.46);
+        base.op = [0, 0.55, 0.72, 0.86, 1][v];
+      } else if (isToday) {
+        // Not pushed yet: just the ring.
+      } else if (freezes[idx]) {
+        base.isText = true; base.glyph = 'F'; base.op = 0.6;
+      } else if (wd === 0 || wd === 6) {
+        base.isText = true; base.glyph = 'R'; base.op = 0.38;
+      } else {
+        base.isText = true; base.glyph = '×'; base.op = 0.32; base.fs = Math.round(c * 0.9);
+      }
+      return base;
+    };
+
+    // Today is Tuesday 17 November 2026.
+    const today = new Date(2026, 10, 17);
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dateOf = (idx) => { const d = new Date(today); d.setDate(d.getDate() - (total - 1 - idx)); return d; };
+
+    const mk = (start, end, c, colGap, rowGap, h, labels) => {
+      const cells = [];
+      for (let i = start; i < end; i++) cells.push(cellFor(lv[i], i, c));
+      const cols = Math.ceil((end - start) / 7);
+      const months = [];
+      if (labels) {
+        let prev = -1;
+        const marks = [];
+        for (let k = 0; k < cols; k++) {
+          const m = dateOf(start + k * 7).getMonth();
+          if (m !== prev) marks.push({ k, m });
+          prev = m;
+        }
+        marks.forEach((mk2, j) => {
+          const next = marks[j + 1];
+          if (next && next.k - mk2.k < 3) return;
+          months.push({ t: MONTHS[mk2.m], x: Math.round(mk2.k * (c + colGap)) });
+        });
+      }
+      const dayNames = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+      return {
+        c, colGap, rowGap, h, cells, labels, months, sub: L.sub,
+        dayRows: dayNames.map((t) => ({ t, h: c }))
+      };
+    };
+
+    const sizes = { small: [170, 170], medium: [364, 170], large: [364, 382], before: [364, 170] };
+    const [W, H] = sizes[fam] || sizes.large;
+    const innerW = W - 32, innerH = H - 32;
+    const gap = 3;
+    let bands = [];
+    let headGap = 10;
+
+    if (fam === 'before') {
+      const cols = 26;
+      const n = (cols - 1) * 7 + 3;
+      bands = [mk(total - n, total, 8, 3, 3, 77, false)];
+      headGap = 0;
+    } else if (fam === 'large') {
+      headGap = 12;
+      const blockH = (innerH - 88 - headGap - 14) / 2;
+      const gridH = blockH - 15;
+      const gridW = innerW - 26;
+      const c = Math.floor((gridH - 6 * gap) / 7);
+      const cols = Math.floor((gridW + gap) / (c + gap));
+      const colGap = (gridW - cols * c) / (cols - 1);
+      const rowGap = (gridH - 7 * c) / 6;
+      const recentN = (cols - 1) * 7 + 3;
+      const rs = total - recentN;
+      const os = rs - cols * 7;
+      bands = [mk(os, rs, c, colGap, rowGap, gridH, true), mk(rs, total, c, colGap, rowGap, gridH, true)];
+    } else {
+      const gridH = innerH - 22 - headGap;
+      const c = Math.floor((gridH - 6 * gap) / 7);
+      const cols = Math.floor((innerW + gap) / (c + gap));
+      const colGap = (innerW - cols * c) / (cols - 1);
+      const rowGap = (gridH - 7 * c) / 6;
+      const n = (cols - 1) * 7 + 3;
+      bands = [mk(total - n, total, c, colGap, rowGap, gridH, false)];
+    }
+
+    const pushed = !pending;
+    return {
+      W, H, bands, headGap,
+      corner: 22,
+      bg: L.bg, text: L.text, sub: L.sub, font: L.font, numFont: L.numFont,
+      numBg: L.numBg, numColor: L.numColor, scan: L.scan,
+      accent, streak, pushed,
+      isSmall: fam === 'small', isMedium: fam === 'medium', isLarge: fam === 'large', isBefore: fam === 'before',
+      showGrid: fam !== 'before',
+      todayBg: pushed ? accent : 'transparent',
+      todayRing: pushed ? accent : L.sub,
+      todayDot: pushed ? accent : 'transparent',
+      checkInk: lookId === 'paper' ? '#F7F2E8' : '#0B0B0C',
+      statusText: pushed ? 'Pushed today' : 'Not yet today',
+      statusInk: pushed ? L.text : L.sub
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -35,7 +35,7 @@ enum SelfCheck {
             print("  PASS  \(name)")
         } else {
             failures += 1
-            print("  FAIL  \(name)\(detail.isEmpty ? "" : " — \(detail)")")
+            print("  FAIL  \(name)\(detail.isEmpty ? "" : ": \(detail)")")
         }
     }
 
@@ -44,7 +44,7 @@ enum SelfCheck {
 
         let status = await SystemNotificationCenter.authorizationStatus()
         print("  authorization status: \(status.rawValue) (0=notDetermined 1=denied 2=authorized 3=provisional)")
-        // Provisional grants silently — no alert to tap, so a headless run can
+        // Provisional grants silently, with no alert to tap, so a headless run can
         // still exercise the real notification center. iOS drops requests from
         // an unauthorized app without raising an error, which is why an
         // unauthorized run shows up as "nothing queued" rather than a failure.
@@ -80,7 +80,7 @@ enum SelfCheck {
 
         await scheduler.removeAllManaged()
 
-        // 1 — streak on the line: both slots queued, with the real number.
+        // 1: streak on the line: both slots queued, with the real number.
         print("\n[1] Streak at risk (13 days, nothing pushed today)")
         seed(lastActiveDaysAgo: 1, streakLength: 13)
         AppConfig.lastCelebratedStreak = 7
@@ -110,8 +110,8 @@ enum SelfCheck {
             check("evening fires after midday", fire > (fireDate(midday) ?? now))
         }
 
-        // 2 — the cancel mechanic. This is the one that matters.
-        print("\n[2] Pushed today — slots must be withdrawn")
+        // 2: the cancel mechanic. This is the one that matters.
+        print("\n[2] Pushed today: slots must be withdrawn")
         seed(lastActiveDaysAgo: 0, streakLength: 14)
         AppConfig.lastCelebratedStreak = 14 // don't let a milestone muddy the read
         await NotificationCoordinator.reconcile(center: center)
@@ -120,7 +120,7 @@ enum SelfCheck {
         check("midday withdrawn", pending["daily-midday-\(today)"] == nil)
         check("evening withdrawn", pending["daily-evening-\(today)"] == nil)
 
-        // 3 — dormant day one names the streak that died, and stays to one slot.
+        // 3: dormant day one names the streak that died, and stays to one slot.
         print("\n[3] Dormant day 1 after a 15-day streak")
         await scheduler.resetDaySlots()
         seed(lastActiveDaysAgo: 2, streakLength: 15)
@@ -136,7 +136,7 @@ enum SelfCheck {
         check("no evening deadline when nothing is at stake",
               pending["daily-evening-\(today)"] == nil)
 
-        // 4 — token ladder lands on the right days.
+        // 4: token ladder lands on the right days.
         print("\n[4] Token expiring in 11 days")
         let expiry = calendar.date(byAdding: .day, value: 11, to: now)!
         AppConfig.tokenExpiry = expiry
@@ -157,8 +157,8 @@ enum SelfCheck {
                   "hour \(calendar.component(.hour, from: fire))")
         }
 
-        // 5 — a dead token silences commit nudges.
-        print("\n[5] Token rejected — commit nudges must go quiet")
+        // 5: a dead token silences commit nudges.
+        print("\n[5] Token rejected: commit nudges must go quiet")
         await scheduler.resetDaySlots()
         seed(lastActiveDaysAgo: 1, streakLength: 13)
         AppConfig.authFailed = true
@@ -171,7 +171,7 @@ enum SelfCheck {
               pending.keys.filter { $0.hasPrefix("daily-") }.isEmpty,
               "got \(pending.keys.filter { $0.hasPrefix("daily-") }.sorted())")
 
-        // 6 — the part queueing alone can't prove: does it actually arrive?
+        // 6: the part queueing alone can't prove: does it actually arrive?
         print("\n[6] Delivery (waiting ~8s for a real fire)")
         await scheduler.removeAllManaged()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()

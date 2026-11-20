@@ -28,7 +28,7 @@ struct PushedApp: App {
     init() {
         UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
 
-        // Backup reconciliation path for anyone who hasn't added the widget —
+        // Backup reconciliation path for anyone who hasn't added the widget:
         // without a widget there's no timeline refresh, so this is the only
         // background hook left. iOS grants these opportunistically, which is
         // exactly why it's the backup and not the primary.
@@ -44,6 +44,7 @@ struct PushedApp: App {
         }
 
         AppConfig.backfillTrackingStart()
+        AppConfig.settleStyleLibrary()
         TestScenario.expireIfNeeded()
 
         // Pretend data must never reach a public build, even one restored
@@ -67,7 +68,7 @@ struct PushedApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
-                // Foregrounding is the most accurate reconciliation available —
+                // Foregrounding is the most accurate reconciliation available:
                 // fresh data, no background budget in the way.
                 TestScenario.expireIfNeeded()
                 Task { await NotificationCoordinator.reconcile() }
