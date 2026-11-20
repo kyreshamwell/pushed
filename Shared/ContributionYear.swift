@@ -230,7 +230,7 @@ struct YearSummary: Equatable, Sendable {
 
 extension ContributionYear {
     /// How many years before this one the demo account joined.
-    static let sampleYearsBack = 3
+    static let sampleYearsBack = 2
 
     /// A believable past year for demo mode and previews: busier each year
     /// since joining, quieter at weekends, with a busy spring and a slow

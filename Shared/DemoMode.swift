@@ -15,7 +15,7 @@ import WidgetKit
 /// Debug builds only. The fake token lives in memory and never reaches the
 /// Keychain, and the next launch without the flag clears the sample data.
 enum DemoMode {
-    static let username = "your-username"
+    static let username = "user-codes"
     private static let activeKey = "debug-demo-mode"
 
     /// Launch arguments given as `-Name value` land in UserDefaults.
@@ -38,7 +38,7 @@ enum DemoMode {
         AppConfig.sharedDefaults.set(isRequested, forKey: activeKey)
 
         if isRequested {
-            ContributionSnapshot.sample(quiet: quietDays).save()
+            ContributionSnapshot.sample(streak: 27, quiet: quietDays).save()
         } else if wasActive {
             // Sample data must not outlive the demo and pass for the real thing.
             AppConfig.sharedDefaults.removeObject(forKey: ContributionSnapshot.defaultsKey)

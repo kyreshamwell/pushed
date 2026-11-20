@@ -433,6 +433,7 @@ struct YearSheet: View {
     @State var model: YearHistoryModel
     @State private var selectedYear = Calendar.current.component(.year, from: Date())
     /// A `MonthSummary.id`, year and month together.
+    @Namespace private var segmentPill
     @State private var openMonth: Int? = Calendar.current.component(.year, from: Date()) * 100
         + Calendar.current.component(.month, from: Date())
 
@@ -441,14 +442,20 @@ struct YearSheet: View {
     var body: some View {
         InsightSheetFrame(title: "Your year") {
             switcher
-            switch model.phase(for: selectedYear) {
-            case .loading:
-                loading
-            case .failed(let message):
-                failure(message)
-            case .loaded(let summary):
-                yearContent(summary)
+            // One block per selection, so switching crossfades whole instead of
+            // morphing rows that share a month between two ranges.
+            VStack(alignment: .leading, spacing: 18) {
+                switch model.phase(for: selectedYear) {
+                case .loading:
+                    loading
+                case .failed(let message):
+                    failure(message)
+                case .loaded(let summary):
+                    yearContent(summary)
+                }
             }
+            .id(selectedYear)
+            .transition(.opacity)
         }
         .task { await model.loadYears() }
         .task(id: selectedYear) { await model.load(selectedYear) }
@@ -486,7 +493,7 @@ struct YearSheet: View {
     private func segment(_ year: Int) -> some View {
         let selected = year == selectedYear
         return Button {
-            withAnimation(.snappy) {
+            withAnimation(.smooth(duration: 0.3)) {
                 selectedYear = year
                 let month = Calendar.current.component(.month, from: Date())
                 openMonth = switch year {
@@ -506,6 +513,7 @@ struct YearSheet: View {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .fill(InsightColors.selectedSegment)
                             .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
+                            .matchedGeometryEffect(id: "pill", in: segmentPill)
                     }
                 }
                 .contentShape(Rectangle())
