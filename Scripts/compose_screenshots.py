@@ -243,7 +243,7 @@ def layout_13(src):
 
     # 1. Hero: the widgets, big and filling their frames.
     img = background(*dark, [(0x2DD4BF, 1120, 980, 560, 72), (0x8B5CF6, 240, 1500, 560, 64), (0xF97316, 1100, 2500, 520, 52)])
-    top = headline_13(img, "Your GitHub streak,\nfront and center", "Bold widgets that fill the frame,\nin every size.")
+    top = headline_13(img, "Your GitHub streak,\non your Home Screen", "Bold widgets that fill the frame,\nin every size.")
     stack(img, top + 20, [
         [src.widget("aurora-graph-large", 1120)],
         [src.widget("ember-streak-small", 532), src.widget("marks-week-small", 532)],
@@ -252,7 +252,7 @@ def layout_13(src):
 
     # 2. Six looks, Marks included, in small and medium.
     img = background(*dark, [(0x22C55E, 200, 1000, 560, 60), (0x8B5CF6, 1150, 1900, 560, 60), (0xF59E0B, 250, 2600, 480, 44)])
-    top = headline_13(img, "Six looks,\nevery size", "Classic, Aurora, Ember, Terminal,\nPaper and the new Marks.")
+    top = headline_13(img, "Six looks,\nevery size", "Classic, Aurora, Ember, Terminal,\nPaper and Marks.")
     stack(img, top + 10, [
         [src.widget("classic-graph-medium", 1000)],
         [src.widget("aurora-week-small", 474), src.widget("ember-graph-small", 474)],
@@ -261,15 +261,23 @@ def layout_13(src):
     ], 40)
     src.save(img, "02-six-looks")
 
-    # 3. The Styles screen, with the rotation strip.
-    phone_page("03-new-look-every-day", [(0x2DD4BF, 1150, 1100, 560, 70), (0x8B5CF6, 150, 2300, 600, 70)],
-               "A new look\nevery day", "Circle the looks you love.\nThey take turns at midnight.", "styles")
+    # 3. The streak sheet: the run on a calendar, rest days and the freeze.
+    phone_page("03-every-day-of-your-streak", [(0x22C55E, 1120, 1100, 560, 66), (0x38BDF8, 180, 2300, 600, 60)],
+               "See every day\nof your streak", "Your run on a calendar, with rest days,\nfreezes and today marked.", "streak")
 
-    # 4. The Customize sheet.
-    phone_page("04-make-it-yours", [(0xFF7A59, 1120, 1150, 540, 70), (0x6366F1, 180, 2300, 600, 76)],
+    # 4. The year sheet: totals and every month.
+    phone_page("04-your-year", [(0x14B8A6, 1150, 1100, 560, 64), (0x22C55E, 160, 2350, 600, 60)],
+               "Your year,\nmonth by month", "Look back at any year\nsince you joined GitHub.", "year")
+
+    # 5. The Look picker, with four looks in the rotation.
+    phone_page("05-new-look-every-day", [(0x2DD4BF, 1150, 1100, 560, 70), (0x8B5CF6, 150, 2300, 600, 70)],
+               "A new look\nevery day", "Pick the looks you love.\nThey take turns at midnight.", "styles")
+
+    # 6. The Customize sheet.
+    phone_page("06-make-it-yours", [(0xFF7A59, 1120, 1150, 540, 70), (0xEC4899, 180, 2300, 600, 76)],
                "Make it yours", "Pick a shape and a color,\nthen save it as your own look.", "customize")
 
-    # 5. Marks up close, with what the symbols mean.
+    # 7. Marks up close, with what the symbols mean.
     img = background(*dark, [(0x94A3B8, 1080, 1150, 600, 46), (0x3B82F6, 220, 2350, 560, 54)])
     top = headline_13(img, "Every day,\nmarked", "A symbol for every day, so you see\nwhat happened, not just how much.")
     large = src.widget("marks-graph-large", 1120)
@@ -278,17 +286,17 @@ def layout_13(src):
     y = top + (H - top - large.height - gap - legend_h) / 2
     shadowed(img, large, (W - large.width) / 2, y)
     marks_legend(img, y + large.height + gap)
-    src.save(img, "05-every-day-marked")
+    src.save(img, "07-every-day-marked")
 
-    # 6. Rest days and the freeze.
+    # 8. Rest days and the freeze.
     img = background(*dark, [(0x38BDF8, 1120, 1000, 560, 66), (0x22C55E, 200, 2350, 560, 56)])
     top = headline_13(img, "Rest without\nlosing your streak", "Rest days and a monthly freeze\nkeep your streak alive.")
     stack(img, top + 20, [[src.widget("classic-week-large", 1120)], [src.widget("ember-graph-medium", 1120)]], 60)
-    src.save(img, "06-rest-days")
+    src.save(img, "08-rest-days")
 
-    # 7. Home.
-    phone_page("07-at-a-glance", [(0x22C55E, 1120, 1100, 540, 62), (0x14B8A6, 180, 2350, 600, 62)],
-               "Everything\nat a glance", "Today, your streak and your looks,\nall on one screen.", "home")
+    # 9. Home.
+    phone_page("09-at-a-glance", [(0x22C55E, 1120, 1100, 540, 62), (0x14B8A6, 180, 2350, 600, 62)],
+               "Everything\nat a glance", "Today, your streak and your year,\none tap away.", "home")
 
 
 def layout_12(src):

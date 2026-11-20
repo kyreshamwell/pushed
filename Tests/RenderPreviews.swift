@@ -260,7 +260,7 @@ final class RenderPreviews: XCTestCase {
 
     /// The widgets for the App Store screenshots: each card on its own with
     /// a clear background, drawn large so it stays sharp once composed. The
-    /// streak runs over weekend rest days and one freeze, so the day off
+    /// streak runs over Saturday rest days and one freeze, so the day off
     /// marks and the Marks symbols show. Every built-in look, Marks
     /// included, is drawn in all three sizes and layouts, plus Classic in
     /// light mode and Marks in a picked color. `Scripts/compose_screenshots.py`
@@ -270,22 +270,17 @@ final class RenderPreviews: XCTestCase {
         let folder = base.appendingPathComponent("store")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
-        // A Wednesday: this week has days done and days still to come.
-        let now = ContributionCalendar.dateFormatter.date(from: "2026-10-21")!
-        // The run starts after a missed Friday, Oct 2. Its weekdays, less
-        // the frozen Tuesday, make a 12 day streak, the same number the demo
-        // build shows in the app captures.
-        let rested = weekendsOff(.sample(streak: 19, asOf: now), asOf: now)
-        var levels = rested.recentLevels
-        levels[levels.count - 2] = 0 // Tuesday, covered by the freeze
-        let snapshot = ContributionSnapshot(
-            totalContributions: rested.totalContributions, recentLevels: levels,
-            lastDate: rested.lastDate, fetchedAt: now
+        // The same account the demo build shows in the app captures, on the
+        // same day: a Friday with Saturday still to come, a 35 day streak
+        // over Saturday rest days and one freeze, and a 58 day best run.
+        let now = ContributionCalendar.dateFormatter.date(from: "2026-11-20")!
+        let snapshot = ContributionSnapshot.sample(
+            streak: 41, restWeekday: 6, freezeDaysAgo: 14, bestRun: 58, bestRunEndsDaysAgo: 160, asOf: now
         )
         let protection = StreakProtection(
-            schedules: [.init(from: "2026-01-01", weekdays: [1, 7])],
-            claims: ["2026-10-20": .freeze],
-            trackedSince: "2026-08-01"
+            schedules: [.init(from: "2026-10-09", weekdays: [7])],
+            claims: ["2026-11-06": .freeze],
+            trackedSince: "2026-01-24"
         )
 
         func card(

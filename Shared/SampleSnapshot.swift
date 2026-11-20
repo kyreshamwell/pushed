@@ -10,7 +10,21 @@ extension ContributionSnapshot {
     ///
     /// `quiet` leaves that many days empty at the end, today included: 1 for
     /// a streak that's waiting on today, 2 for one that ended yesterday.
-    static func sample(streak: Int = 12, quiet: Int = 0, asOf now: Date = Date()) -> ContributionSnapshot {
+    ///
+    /// Demo mode adds the rest of a real habit: `restWeekday` (0 is Sunday)
+    /// left empty inside the streak for rest days, `freezeDaysAgo` for one
+    /// missed day the freeze covers, and `bestRun`, an older run of that many
+    /// days ending `bestRunEndsDaysAgo` days back, so the best streak beats
+    /// the current one.
+    static func sample(
+        streak: Int = 12,
+        quiet: Int = 0,
+        restWeekday: Int? = nil,
+        freezeDaysAgo: Int? = nil,
+        bestRun: Int? = nil,
+        bestRunEndsDaysAgo: Int = 150,
+        asOf now: Date = Date()
+    ) -> ContributionSnapshot {
         let calendar = Calendar(identifier: .gregorian)
         let weekday = calendar.component(.weekday, from: now) // Sunday = 1
         // 52 full weeks plus this week so far, the same shape `from(_:)` keeps.
@@ -25,9 +39,14 @@ extension ContributionSnapshot {
             if daysAgo < quiet {
                 active = false
             } else if daysAgo < quiet + streak {
-                active = true
+                // Inside the streak: busy, apart from rest days and the freeze.
+                active = dayOfWeek != restWeekday && daysAgo != freezeDaysAgo.map { $0 + quiet }
             } else if daysAgo == quiet + streak || (140...150).contains(daysAgo) {
                 active = false // the break before this streak, and a holiday
+            } else if let bestRun, (bestRunEndsDaysAgo..<bestRunEndsDaysAgo + bestRun).contains(daysAgo) {
+                active = true
+            } else if let bestRun, daysAgo == bestRunEndsDaysAgo + bestRun || daysAgo == bestRunEndsDaysAgo - 1 {
+                active = false // the days either side of the best run
             } else {
                 let isWeekend = dayOfWeek == 0 || dayOfWeek == 6
                 active = noise(daysAgo) < (isWeekend ? 0.25 : 0.72)
